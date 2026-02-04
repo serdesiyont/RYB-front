@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useRef, useEffect } from 'react';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { schools } from '@/lib/mockData';
+import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { schools } from "@/lib/mockData";
 
 interface NavigationProps {
   isHomepage?: boolean;
@@ -16,17 +16,24 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setShowDropdown(false);
       }
     }
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   return (
-    <header className={`${isHomepage ? 'absolute top-0 left-0 right-0 bg-transparent' : 'bg-black'} text-white flex justify-between items-center px-12 md:px-24 py-6 z-50`}>
+    <header
+      className={`${
+        isHomepage ? "absolute top-0 left-0 right-0 bg-transparent" : "bg-black"
+      } text-white flex justify-between items-center px-12 md:px-24 py-6 z-50`}
+    >
       <Link href="/" className="text-lg font-bold">
         Rate Your Professors
       </Link>
@@ -40,7 +47,7 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
           </select>
           <span className="text-sm">at</span>
           <select className="bg-black text-white border border-gray-600 rounded px-3 py-1 text-sm hover:border-gray-400">
-            {schools.map(school => (
+            {schools.map((school) => (
               <option key={school.id}>{school.name}</option>
             ))}
           </select>
