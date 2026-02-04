@@ -12,6 +12,7 @@ export default function Home() {
   const [showWelcome, setShowWelcome] = useState(true);
   const [searchMode, setSearchMode] = useState<'professor' | 'school'>('professor');
   const [showSchoolSearch, setShowSchoolSearch] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
 
   const filteredProfessors = professors.filter(prof =>
     prof.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -27,13 +28,13 @@ export default function Home() {
       <Navigation isHomepage={true} />
 
       {/* Hero Section */}
-      <div className="relative h-96 bg-cover bg-center" style={{
+      <div className="relative h-96 bg-cover bg-center pt-20" style={{
         backgroundImage: 'linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=1200&h=400&fit=crop)',
       }}>
         <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
-          <h1 className="text-5xl font-bold mb-4 bg-white text-black px-6 py-2">
+          {/* <h1 className="text-5xl font-bold mb-4 px-6 py-2">
             RATE MY PROFESSORS
-          </h1>
+          </h1> */}
           
           {searchMode === 'professor' ? (
             <>
@@ -41,13 +42,12 @@ export default function Home() {
                 Find a <span className="font-bold">professor</span>
               </p>
               <div className="w-full max-w-md px-4 mb-4 relative">
-                <div className="flex items-center bg-white bg-opacity-90 rounded-full px-4 py-3 gap-2 backdrop-blur-sm shadow-lg">
-                  <span className="text-black text-lg">👨‍🎓</span>
+                <div className="flex items-center bg-transparent rounded-full px-4 py-3 gap-2 backdrop-blur-sm shadow-lg border border-white border-opacity-50">
                   <Input
                     placeholder="Professor name"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="border-0 rounded-full bg-transparent text-black placeholder:text-gray-500 focus:outline-none"
+                    className="border-0 rounded-full bg-transparent text-white placeholder:text-gray-200 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
                   />
                 </div>
                 {searchQuery && filteredProfessors.length > 0 && (
@@ -83,13 +83,12 @@ export default function Home() {
                 Enter your <span className="font-bold">school</span> to get started
               </p>
               <div className="w-full max-w-md px-4 mb-4 relative">
-                <div className="flex items-center bg-white bg-opacity-90 rounded-full px-4 py-3 gap-2 backdrop-blur-sm shadow-lg">
-                  <span className="text-black text-lg">🏫</span>
+                <div className="flex items-center bg-transparent rounded-full px-4 py-3 gap-2 backdrop-blur-sm shadow-lg border border-white border-opacity-50 ">
                   <Input
                     placeholder="Your school"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="border-0 rounded-full bg-transparent text-black placeholder:text-gray-500 focus:outline-none"
+                    className="border-0 rounded-full bg-transparent text-white placeholder:text-gray-200 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
                   />
                 </div>
                 {searchQuery && filteredSchools.length > 0 && (
@@ -127,7 +126,7 @@ export default function Home() {
       {showWelcome && (
         <div className="bg-gradient-to-b from-yellow-50 to-white py-20 px-4">
           <div className="max-w-6xl mx-auto">
-            <h2 className="text-4xl font-bold text-center mb-16">Welcome back!</h2>
+            <h2 className="text-4xl font-bold text-center mb-16">Welcome!</h2>
             
             <div className="grid md:grid-cols-3 gap-8 mb-8">
               {/* Illustration 1 */}
@@ -167,16 +166,25 @@ export default function Home() {
             </div>
 
             <div className="flex justify-center gap-4">
-              <Link href="/my-ratings">
-                <Button className="bg-black text-white rounded-full px-8 py-3">
-                  My Ratings
-                </Button>
-              </Link>
+              {isLoggedIn ? (<div className="flex items-center gap-4">
+                <Link href="/my-ratings">
+                  <Button className="bg-black text-white rounded-full px-8 py-3 hover:bg-blue-600 ">
+                    My Ratings
+                  </Button>
+                </Link>
               <Link href="/rate">
-                <Button className="bg-blue-600 text-white rounded-full px-8 py-3">
+                <Button className="bg-blue-600 text-white rounded-full px-8 py-3 ">
                   Rate a Professor
                 </Button>
               </Link>
+              </div>
+              ) : (
+                <Link href="/signup">
+                  <Button className="bg-black text-white rounded-full px-8 py-3 hover:bg-blue-600">
+                    Sign Up Now
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </div>

@@ -26,9 +26,9 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
   }, []);
 
   return (
-    <header className={`${isHomepage ? 'bg-transparent' : 'bg-black'} text-white flex justify-between items-center top-0 z-50`}>
+    <header className={`${isHomepage ? 'absolute top-0 left-0 right-0 bg-transparent' : 'bg-black'} text-white flex justify-between items-center px-12 md:px-24 py-6 z-50`}>
       <Link href="/" className="text-lg font-bold">
-        RMP
+        Rate Your Professors
       </Link>
 
       {/* Navigation items - only on non-homepage */}
@@ -53,14 +53,14 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
           <Button
             onClick={() => setIsLoggedIn(true)}
             variant="outline"
-            className="bg-transparent text-white border-white hover:bg-gray-800 text-sm"
+            className="bg-transparent text-white border-white hover:bg-white hover:text-black hover:scale-105 transition-all duration-300 text-sm"
           >
             Sign Up
           </Button>
           <Button
             onClick={() => setIsLoggedIn(true)}
             variant="outline"
-            className="bg-transparent text-white border-white hover:bg-gray-800 text-sm"
+            className="bg-transparent text-white border-white hover:bg-white hover:text-black hover:scale-105 transition-all duration-300 text-sm"
           >
             Log In
           </Button>
