@@ -1,0 +1,473 @@
+"use client";
+
+import { use, useMemo, useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import Header from "@/components/Header";
+import { professors, schools } from "@/lib/mockData";
+
+const TAGS = [
+  "Tough Grader",
+  "Get Ready To Read",
+  "Participation Matters",
+  "Extra Credit",
+  "Group Projects",
+  "Amazing Lectures",
+  "Clear Grading Criteria",
+  "Gives Good Feedback",
+  "Inspirational",
+  "Lots Of Homework",
+  "Hilarious",
+  "Beware Of Pop Quizzes",
+  "So Many Papers",
+  "Caring",
+  "Respected",
+  "Lecture Heavy",
+  "Test Heavy",
+  "Graded By Few Things",
+  "Accessible Outside Class",
+  "Online Savvy",
+];
+
+const COURSES = ["GSD600", "GSD601", "GSD602", "CS50", "MATH101", "ENG201"];
+
+const ratingColor = (value: number) => {
+  if (value <= 1) return "#dc2626";
+  if (value <= 2) return "#ec4899";
+  if (value <= 3) return "#facc15";
+  if (value <= 4) return "#bbf7d0";
+  return "#16a34a";
+};
+
+const boxBg = (value: number, current: number) => {
+  if (value !== current) return "bg-gray-200 hover:bg-gray-300";
+  const color = ratingColor(current);
+  return "text-white";
+};
+
+export default function ProfessorRatingDetail({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const resolvedParams = use(params);
+  const selectedProf = professors.find(
+    (p) => p.id === parseInt(resolvedParams.id, 10)
+  );
+
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [rating, setRating] = useState(0);
+  const [difficulty, setDifficulty] = useState(0);
+  const [retake, setRetake] = useState<"yes" | "no" | null>(null);
+  const [courseCode, setCourseCode] = useState("");
+  const [isOnlineCourse, setIsOnlineCourse] = useState(false);
+  const [textbook, setTextbook] = useState<"yes" | "no" | null>(null);
+  const [attendance, setAttendance] = useState<"mandatory" | "optional" | null>(
+    null
+  );
+  const [credit, setCredit] = useState<"yes" | "no" | null>(null);
+  const [grade, setGrade] = useState("");
+  const [review, setReview] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const courseSuggestions = useMemo(() => {
+    if (!courseCode) return COURSES.slice(0, 5);
+    return COURSES.filter((c) =>
+      c.toLowerCase().includes(courseCode.toLowerCase())
+    ).slice(0, 5);
+  }, [courseCode]);
+
+  const handleSubmit = () => {
+    const missing: string[] = [];
+    if (rating < 1) missing.push("rating");
+    if (difficulty < 1) missing.push("difficulty");
+    if (!retake) missing.push("retake");
+    if (!courseCode.trim()) missing.push("course");
+    if (!textbook) missing.push("textbook");
+    if (!attendance) missing.push("attendance");
+    if (!credit) missing.push("credit");
+    if (!grade) missing.push("grade");
+    if (!review.trim()) missing.push("review");
+
+    if (missing.length > 0) {
+      setError(
+        "Please fill all required fields before submitting. Tags are optional."
+      );
+      return;
+    }
+
+    setError(null);
+    // Stub submit: replace with real mutation when backend is ready
+    alert("Submitted!");
+  };
+
+  if (!selectedProf) {
+    return <div className="p-4">Professor not found</div>;
+  }
+
+  const toggleTag = (tag: string) => {
+    if (selectedTags.includes(tag)) {
+      setSelectedTags(selectedTags.filter((t) => t !== tag));
+    } else if (selectedTags.length < 3) {
+      setSelectedTags([...selectedTags, tag]);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+
+      <main className="max-w-3xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <p className="mb-2 text-sm text-gray-600">Cambridge, MA</p>
+          <h1 className="mb-1 text-4xl font-bold">{selectedProf.name}</h1>
+          <p className="mb-3 text-lg text-gray-600">Add Rating</p>
+          <p className="text-sm">
+            <span className="font-semibold">{selectedProf.department}</span> •
+            <Link
+              href={`/school/${selectedProf.schoolId}`}
+              className="ml-1 text-blue-600 hover:underline"
+            >
+              {schools.find((s) => s.id === selectedProf.schoolId)?.name ||
+                "University"}
+            </Link>
+          </p>
+        </div>
+
+        {/* Select up to 3 tags */}
+        <div className="mb-6 rounded-lg bg-white p-6">
+          <h2 className="mb-4 font-semibold">Select up to 3 tags</h2>
+          <div className="flex flex-wrap gap-2">
+            {TAGS.map((tag) => (
+              <button
+                key={tag}
+                onClick={() => toggleTag(tag)}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                  selectedTags.includes(tag)
+                    ? "bg-gray-800 text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                } ${
+                  selectedTags.length >= 3 && !selectedTags.includes(tag)
+                    ? "cursor-not-allowed opacity-50"
+                    : ""
+                }`}
+                disabled={
+                  selectedTags.length >= 3 && !selectedTags.includes(tag)
+                }
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Select Course Code */}
+        <div className="mb-6 rounded-lg bg-white p-6">
+          <h2 className="mb-4 font-semibold">Course name / code</h2>
+          <div className="mb-3">
+            <input
+              type="text"
+              value={courseCode}
+              onChange={(e) => setCourseCode(e.target.value)}
+              placeholder="Start typing course name or code"
+              className="w-full rounded border border-gray-300 px-4 py-2"
+            />
+          </div>
+          {courseSuggestions.length > 0 && (
+            <div className="mb-4 rounded border border-gray-200 bg-gray-50 p-2 text-sm">
+              {courseSuggestions.map((course) => (
+                <button
+                  key={course}
+                  onClick={() => setCourseCode(course)}
+                  className="block w-full rounded px-3 py-2 text-left hover:bg-white"
+                >
+                  {course}
+                </button>
+              ))}
+            </div>
+          )}
+          <label className="flex cursor-pointer items-center gap-3">
+            <span className="text-sm">Fill course name if not listed</span>
+          </label>
+        </div>
+
+        {/* Rate your professor */}
+        <div className="mb-6 rounded-lg bg-white p-6">
+          <h2 className="mb-4 font-semibold">
+            Rate your professor <span className="text-red-500">*</span>
+          </h2>
+          <div className="mb-4 flex justify-center gap-2">
+            {[1, 2, 3, 4, 5].map((value) => (
+              <button
+                key={value}
+                onClick={() => setRating(value)}
+                style={{
+                  backgroundColor:
+                    value <= rating && rating > 0
+                      ? ratingColor(rating)
+                      : "#e5e7eb",
+                }}
+                className="h-12 w-12 rounded-lg transition"
+              />
+            ))}
+          </div>
+          <div className="flex justify-between text-sm text-gray-600">
+            <span>1 - Awful</span>
+            <span>5 - Awesome</span>
+          </div>
+        </div>
+
+        {/* How difficult */}
+        <div className="mb-6 rounded-lg bg-white p-6">
+          <h2 className="mb-4 font-semibold">
+            How difficult was this professor?{" "}
+            <span className="text-red-500">*</span>
+          </h2>
+          <div className="mb-4 flex justify-center gap-2">
+            {[1, 2, 3, 4, 5].map((value) => (
+              <button
+                key={value}
+                onClick={() => setDifficulty(value)}
+                style={{
+                  backgroundColor:
+                    value <= difficulty && difficulty > 0
+                      ? ratingColor(difficulty)
+                      : "#e5e7eb",
+                }}
+                className="h-12 w-12 rounded-lg transition"
+              />
+            ))}
+          </div>
+          <div className="flex justify-between text-sm text-gray-600">
+            <span>1 - Very Easy</span>
+            <span>5 - Very Difficult</span>
+          </div>
+        </div>
+
+        {/* Would you take again */}
+        <div className="mb-6 rounded-lg bg-white p-6">
+          <h2 className="mb-4 font-semibold">
+            Would you take this professor again?{" "}
+            <span className="text-red-500">*</span>
+          </h2>
+          <div className="flex justify-center gap-6">
+            <button
+              onClick={() => setRetake("yes")}
+              className={`h-16 w-16 rounded-full border-4 transition ${
+                retake === "yes"
+                  ? "border-green-600 bg-green-100"
+                  : "border-gray-300 hover:border-gray-400"
+              }`}
+            />
+            <button
+              onClick={() => setRetake("no")}
+              className={`h-16 w-16 rounded-full border-4 transition ${
+                retake === "no"
+                  ? "border-red-600 bg-red-100"
+                  : "border-gray-300 hover:border-gray-400"
+              }`}
+            />
+          </div>
+          <div className="mt-2 flex justify-center gap-32 text-sm">
+            <span>Yes</span>
+            <span>No</span>
+          </div>
+        </div>
+
+        {/* Was this class taken for credit */}
+        <div className="mb-6 rounded-lg bg-white p-6">
+          <h2 className="mb-4 font-semibold">
+            Was this class taken for credit?
+          </h2>
+          <div className="flex justify-center gap-6">
+            <button
+              onClick={() => setCredit("yes")}
+              className={`h-16 w-16 rounded-full border-4 transition ${
+                credit === "yes"
+                  ? "border-green-600 bg-green-100"
+                  : "border-gray-300 hover-border-gray-400"
+              }`}
+            />
+            <button
+              onClick={() => setCredit("no")}
+              className={`h-16 w-16 rounded-full border-4 transition ${
+                credit === "no"
+                  ? "border-red-600 bg-red-100"
+                  : "border-gray-300 hover:border-gray-400"
+              }`}
+            />
+          </div>
+          <div className="mt-2 flex justify-center gap-32 text-sm">
+            <span>Yes</span>
+            <span>No</span>
+          </div>
+        </div>
+
+        {/* Did this professor use textbooks */}
+        <div className="mb-6 rounded-lg bg-white p-6">
+          <h2 className="mb-4 font-semibold">
+            Did this professor use textbooks?
+          </h2>
+          <div className="flex justify-center gap-6">
+            <button
+              onClick={() => setTextbook("yes")}
+              className={`h-16 w-16 rounded-full border-4 transition ${
+                textbook === "yes"
+                  ? "border-green-600 bg-green-100"
+                  : "border-gray-300 hover:border-gray-400"
+              }`}
+            />
+            <button
+              onClick={() => setTextbook("no")}
+              className={`h-16 w-16 rounded-full border-4 transition ${
+                textbook === "no"
+                  ? "border-red-600 bg-red-100"
+                  : "border-gray-300 hover:border-gray-400"
+              }`}
+            />
+          </div>
+          <div className="mt-2 flex justify-center gap-32 text-sm">
+            <span>Yes</span>
+            <span>No</span>
+          </div>
+        </div>
+
+        {/* Was attendance mandatory */}
+        <div className="mb-6 rounded-lg bg-white p-6">
+          <h2 className="mb-4 font-semibold">Was attendance mandatory?</h2>
+          <div className="flex justify-center gap-6">
+            <button
+              onClick={() => setAttendance("mandatory")}
+              className={`h-16 w-16 rounded-full border-4 transition ${
+                attendance === "mandatory"
+                  ? "border-green-600 bg-green-100"
+                  : "border-gray-300 hover:border-gray-400"
+              }`}
+            />
+            <button
+              onClick={() => setAttendance("optional")}
+              className={`h-16 w-16 rounded-full border-4 transition ${
+                attendance === "optional"
+                  ? "border-red-600 bg-red-100"
+                  : "border-gray-300 hover:border-gray-400"
+              }`}
+            />
+          </div>
+          <div className="mt-2 flex justify-center gap-32 text-sm">
+            <span>Yes</span>
+            <span>No</span>
+          </div>
+        </div>
+
+        {/* Select grade received */}
+        <div className="mb-6 rounded-lg bg-white p-6">
+          <h2 className="mb-4 font-semibold">Select grade received</h2>
+          <select
+            value={grade}
+            onChange={(e) => setGrade(e.target.value)}
+            className="w-full rounded border border-gray-300 px-4 py-2"
+          >
+            <option value="">Select grade</option>
+            <option value="A">A</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B">B</option>
+            <option value="B-">B-</option>
+            <option value="C+">C+</option>
+            <option value="C">C</option>
+            <option value="C-">C-</option>
+            <option value="D">D</option>
+            <option value="F">F</option>
+            <option value="N/A">N/A</option>
+          </select>
+        </div>
+
+        {/* Write a Review */}
+        <div className="mb-6 rounded-lg bg-white p-6">
+          <h2 className="mb-3 font-semibold">
+            Write a Review <span className="text-red-500">*</span>
+          </h2>
+          <p className="mb-4 text-sm text-gray-600">
+            Discuss the professor's professional abilities including teaching
+            style and ability to convey the material clearly
+          </p>
+
+          {/* Guidelines */}
+          <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <div className="flex items-start gap-3">
+              <span className="text-lg font-bold">ℹ</span>
+              <div>
+                <button className="mb-2 text-sm font-semibold hover:underline">
+                  Guidelines
+                </button>
+                <ul className="hidden space-y-1 text-sm text-gray-700">
+                  <li>
+                    • Your rating could be removed if you use profanity or
+                    derogatory terms.
+                  </li>
+                  <li>
+                    • Don't claim that the professor shows bias or favoritism
+                    for or against students.
+                  </li>
+                  <li>• Don't forget to proof read!</li>
+                </ul>
+                <button className="text-sm text-blue-600 hover:underline">
+                  View all guidelines
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <textarea
+            placeholder="What do you want other students to know about this professor?"
+            value={review}
+            onChange={(e) => setReview(e.target.value)}
+            maxLength={350}
+            rows={8}
+            className="w-full resize-none rounded border border-blue-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+          <div className="mt-1 text-right text-sm text-gray-600">
+            {review.length}/350
+          </div>
+        </div>
+
+        {/* Terms and Conditions */}
+        <div className="mb-6 rounded-lg bg-white p-6 text-center text-sm">
+          <p className="mb-3">
+            By clicking the "Submit" button, I acknowledge that I have read and
+            agreed to the Rate My Professors{" "}
+            <Link href="#" className="text-blue-600 hover:underline">
+              Site Guidelines
+            </Link>
+            ,{" "}
+            <Link href="#" className="text-blue-600 hover:underline">
+              Terms of Use
+            </Link>{" "}
+            and{" "}
+            <Link href="#" className="text-blue-600 hover:underline">
+              Privacy Policy
+            </Link>
+            . Submitted data becomes the property of Rate My Professors.
+          </p>
+        </div>
+
+        {/* Submit Button */}
+        <div className="mb-8 flex justify-center">
+          <Button
+            onClick={handleSubmit}
+            className="rounded-full bg-gray-500 px-12 py-3 text-white hover:bg-gray-600"
+          >
+            Submit Rating
+          </Button>
+        </div>
+
+        {error && (
+          <div className="mb-4 rounded border border-red-300 bg-red-50 p-3 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
