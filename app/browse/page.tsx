@@ -2,23 +2,19 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import { schools, professors } from '@/lib/mockData';
 import Header from '@/components/Header';
 
+const ratingColor = (value: number) => {
+  if (value < 1) return 'bg-red-600 text-white';
+  if (value < 2) return 'bg-pink-500 text-white';
+  if (value < 3) return 'bg-yellow-300 text-gray-900';
+  if (value < 4) return 'bg-green-200 text-gray-900';
+  return 'bg-green-600 text-white';
+};
+
 export default function BrowsePage() {
-  const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'professors' | 'schools'>('professors');
-
-  const filteredProfessors = professors.filter(prof =>
-    prof.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    prof.department.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const filteredSchools = schools.filter(school =>
-    school.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -26,16 +22,6 @@ export default function BrowsePage() {
 
       <main className="max-w-6xl mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6">Browse</h1>
-
-        {/* Search */}
-        <div className="mb-8 max-w-md">
-          <Input
-            placeholder="Search professors or schools..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="rounded-lg"
-          />
-        </div>
 
         {/* Tabs */}
         <div className="flex gap-4 mb-8 border-b">
@@ -47,7 +33,7 @@ export default function BrowsePage() {
                 : 'border-transparent text-gray-600'
             }`}
           >
-            Professors ({filteredProfessors.length})
+            Professors ({professors.length})
           </button>
           <button
             onClick={() => setActiveTab('schools')}
@@ -57,14 +43,14 @@ export default function BrowsePage() {
                 : 'border-transparent text-gray-600'
             }`}
           >
-            Schools ({filteredSchools.length})
+            Schools ({schools.length})
           </button>
         </div>
 
         {/* Professors Grid */}
         {activeTab === 'professors' && (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredProfessors.map(prof => (
+            {professors.map(prof => (
               <Link
                 key={prof.id}
                 href={`/professor/${prof.id}`}
@@ -75,9 +61,11 @@ export default function BrowsePage() {
                     <h3 className="font-bold text-lg">{prof.name}</h3>
                     <p className="text-sm text-gray-600">{prof.department}</p>
                   </div>
-                  <div className="bg-blue-600 text-white px-3 py-1 rounded font-bold text-lg">
+                  <span
+                    className={`rounded px-3 py-1 text-sm font-semibold ${ratingColor(prof.averageRating)}`}
+                  >
                     {prof.averageRating.toFixed(1)}
-                  </div>
+                  </span>
                 </div>
 
                 <p className="text-sm text-gray-600 mb-3">{prof.schoolName}</p>
@@ -94,7 +82,7 @@ export default function BrowsePage() {
         {/* Schools Grid */}
         {activeTab === 'schools' && (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredSchools.map(school => (
+            {schools.map(school => (
               <Link
                 key={school.id}
                 href={`/school/${school.id}`}
@@ -105,9 +93,11 @@ export default function BrowsePage() {
                     <h3 className="font-bold text-lg">{school.name}</h3>
                     <p className="text-sm text-gray-600">{school.location}</p>
                   </div>
-                  <div className="bg-yellow-300 text-black px-3 py-1 rounded font-bold text-lg">
+                  <span
+                    className={`rounded px-3 py-1 text-sm font-semibold ${ratingColor(school.averageRating)}`}
+                  >
                     {school.averageRating.toFixed(1)}
-                  </div>
+                  </span>
                 </div>
 
                 <div className="flex justify-between text-xs text-gray-500">
@@ -117,14 +107,6 @@ export default function BrowsePage() {
             ))}
           </div>
         )}
-
-        {/* Empty State */}
-        {(activeTab === 'professors' && filteredProfessors.length === 0) ||
-          (activeTab === 'schools' && filteredSchools.length === 0) ? (
-          <div className="text-center py-12">
-            <p className="text-gray-600 mb-4">No results found for "{searchQuery}"</p>
-          </div>
-        ) : null}
       </main>
     </div>
   );
