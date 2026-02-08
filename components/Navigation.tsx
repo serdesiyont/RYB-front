@@ -9,7 +9,7 @@ interface NavigationProps {
 }
 
 export default function Navigation({ isHomepage = false }: NavigationProps) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(true);
   const [showDropdown, setShowDropdown] = useState(false);
   const [searchType, setSearchType] = useState<"professors" | "schools">(
     "professors"
@@ -120,22 +120,70 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
         {/* Mobile Menu Icon */}
         <div className="relative" ref={mobileMenuRef}>
           {isHomepage ? (
-            /* Homepage: Show auth buttons directly */
+            /* Homepage: Show auth or account actions directly */
             <div className="flex items-center gap-2">
-              <Button
-                asChild
-                variant="outline"
-                className="bg-transparent text-white border-white hover:bg-white hover:text-black text-xs px-4 py-1.5"
-              >
-                <Link href="/signup">Sign Up</Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                className="bg-transparent text-white border-white hover:bg-white hover:text-black text-xs px-4 py-1.5"
-              >
-                <Link href="/login">Log In</Link>
-              </Button>
+              {!isLoggedIn ? (
+                <>
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="bg-transparent text-white border-white hover:bg-white hover:text-black text-xs px-4 py-1.5"
+                  >
+                    <Link href="/signup">Sign Up</Link>
+                  </Button>
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="bg-transparent text-white border-white hover:bg-white hover:text-black text-xs px-4 py-1.5"
+                  >
+                    <Link href="/login">Log In</Link>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    asChild
+                    variant="outline"
+                    className="bg-transparent text-white border-white hover:bg-white hover:text-black text-xs px-4 py-1.5"
+                  >
+                    <Link href="/rate/professor">Add a Lecturer</Link>
+                  </Button>
+                  <button
+                    onClick={() => setShowMobileMenu(!showMobileMenu)}
+                    className="text-xs font-semibold tracking-wide uppercase rounded-full border border-white px-3 py-1.5 hover:bg-white hover:text-black"
+                  >
+                    Menu
+                  </button>
+                  {showMobileMenu && (
+                    <div className="absolute right-0 top-full mt-2 bg-white text-black rounded-lg shadow-lg py-2 w-48">
+                      <Link
+                        href="/profile"
+                        className="block px-4 py-2 hover:bg-gray-100 text-sm font-medium"
+                        onClick={() => setShowMobileMenu(false)}
+                      >
+                        Profile
+                      </Link>
+                      <Link
+                        href="/my-ratings"
+                        className="block px-4 py-2 hover:bg-gray-100 text-sm font-medium"
+                        onClick={() => setShowMobileMenu(false)}
+                      >
+                        Your Ratings
+                      </Link>
+                      <div className="border-t border-gray-200 my-1" />
+                      <button
+                        onClick={() => {
+                          setIsLoggedIn(false);
+                          setShowMobileMenu(false);
+                        }}
+                        className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm font-medium"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           ) : (
             /* Non-homepage: Show menu icon with dropdown */
@@ -175,13 +223,7 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
                       >
                         Profile
                       </Link>
-                      <Link
-                        href="/account-settings"
-                        className="block px-4 py-2 hover:bg-gray-100 text-sm font-medium"
-                        onClick={() => setShowMobileMenu(false)}
-                      >
-                        Account Settings
-                      </Link>
+
                       <Link
                         href="/my-ratings"
                         className="block px-4 py-2 hover:bg-gray-100 text-sm font-medium"
@@ -189,13 +231,7 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
                       >
                         Your Ratings
                       </Link>
-                      <Link
-                        href="/saved-professors"
-                        className="block px-4 py-2 hover:bg-gray-100 text-sm font-medium"
-                        onClick={() => setShowMobileMenu(false)}
-                      >
-                        Saved Professors
-                      </Link>
+
                       <div className="border-t border-gray-200 my-1" />
                       <button
                         onClick={() => {
@@ -272,20 +308,73 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
         {/* Right side items */}
         {isHomepage ? (
           <div className="flex ml-180 items-center gap-3">
-            <Button
-              asChild
-              variant="outline"
-              className="bg-transparent rounded-full px-8 text-white border-white hover:bg-white hover:text-black hover:scale-105 transition-all duration-300 text-sm"
-            >
-              <Link href="/login">Log In</Link>
-            </Button>
-            <Button
-              asChild
-              variant="outline"
-              className="bg-transparent rounded-full px-8 text-white border-white hover:bg-black hover:text-white hover:scale-105 transition-all duration-300 text-sm"
-            >
-              <Link href="/signup">Sign Up</Link>
-            </Button>
+            {!isLoggedIn ? (
+              <>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="bg-transparent rounded-full px-8 text-white border-white hover:bg-white hover:text-black hover:scale-105 transition-all duration-300 text-sm"
+                >
+                  <Link href="/login">Log In</Link>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="bg-transparent rounded-full px-8 text-white border-white hover:bg-black hover:text-white hover:scale-105 transition-all duration-300 text-sm"
+                >
+                  <Link href="/signup">Sign Up</Link>
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="bg-transparent rounded-full px-8 text-white border-white hover:bg-white hover:text-black hover:scale-105 transition-all duration-300 text-sm"
+                >
+                  <Link href="/rate/professor">Add a Lecturer</Link>
+                </Button>
+
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setShowDropdown(!showDropdown)}
+                    className="text-sm font-semibold hover:text-gray-300 flex items-center gap-2"
+                  >
+                    HEY, SERDESIYON
+                    <span className="text-xs">▼</span>
+                  </button>
+
+                  {showDropdown && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white text-black rounded-lg shadow-lg py-2">
+                      <Link
+                        href="/profile"
+                        className="block px-4 py-2 hover:bg-gray-100 text-sm font-medium"
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        Profile
+                      </Link>
+                      <Link
+                        href="/my-ratings"
+                        className="block px-4 py-2 hover:bg-gray-100 text-sm font-medium"
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        Your Ratings
+                      </Link>
+                      <div className="border-t border-gray-200 my-1" />
+                      <button
+                        onClick={() => {
+                          setIsLoggedIn(false);
+                          setShowDropdown(false);
+                        }}
+                        className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm font-medium"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         ) : (
           <div className="flex items-center gap-3">
@@ -307,57 +396,55 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
                 </Button>
               </>
             ) : (
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={() => setShowDropdown(!showDropdown)}
-                  className="text-sm font-semibold hover:text-gray-300 flex items-center gap-2"
+              <div className="flex items-center gap-3">
+                <Button
+                  asChild
+                  variant="outline"
+                  className="bg-white text-black border-white hover:bg-black hover:text-white text-sm font-medium rounded-full px-6"
                 >
-                  HEY, SERDESIYON
-                  <span className="text-xs">▼</span>
-                </button>
+                  <Link href="/rate/professor">Add a Lecturer</Link>
+                </Button>
 
-                {showDropdown && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white text-black rounded-lg shadow-lg py-2">
-                    <Link
-                      href="/profile"
-                      className="block px-4 py-2 hover:bg-gray-100 text-sm font-medium"
-                      onClick={() => setShowDropdown(false)}
-                    >
-                      Profile
-                    </Link>
-                    <Link
-                      href="/account-settings"
-                      className="block px-4 py-2 hover:bg-gray-100 text-sm font-medium"
-                      onClick={() => setShowDropdown(false)}
-                    >
-                      Account Settings
-                    </Link>
-                    <Link
-                      href="/my-ratings"
-                      className="block px-4 py-2 hover:bg-gray-100 text-sm font-medium"
-                      onClick={() => setShowDropdown(false)}
-                    >
-                      Your Ratings
-                    </Link>
-                    <Link
-                      href="/saved-professors"
-                      className="block px-4 py-2 hover:bg-gray-100 text-sm font-medium"
-                      onClick={() => setShowDropdown(false)}
-                    >
-                      Saved Professors
-                    </Link>
-                    <div className="border-t border-gray-200 my-1" />
-                    <button
-                      onClick={() => {
-                        setIsLoggedIn(false);
-                        setShowDropdown(false);
-                      }}
-                      className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm font-medium"
-                    >
-                      Logout
-                    </button>
-                  </div>
-                )}
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setShowDropdown(!showDropdown)}
+                    className="text-sm font-semibold hover:text-gray-300 flex items-center gap-2"
+                  >
+                    HEY, SERDESIYON
+                    <span className="text-xs">▼</span>
+                  </button>
+
+                  {showDropdown && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white text-black rounded-lg shadow-lg py-2">
+                      <Link
+                        href="/profile"
+                        className="block px-4 py-2 hover:bg-gray-100 text-sm font-medium"
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        Profile
+                      </Link>
+
+                      <Link
+                        href="/my-ratings"
+                        className="block px-4 py-2 hover:bg-gray-100 text-sm font-medium"
+                        onClick={() => setShowDropdown(false)}
+                      >
+                        Your Ratings
+                      </Link>
+
+                      <div className="border-t border-gray-200 my-1" />
+                      <button
+                        onClick={() => {
+                          setIsLoggedIn(false);
+                          setShowDropdown(false);
+                        }}
+                        className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm font-medium"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
