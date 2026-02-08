@@ -12,7 +12,14 @@ import { z } from "zod";
 import { Eye, EyeOff, Loader2, Mail, UserRound } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Form,
@@ -131,7 +138,7 @@ function GoogleButton({ label }: { label: string }) {
     <Button
       type="button"
       variant="outline"
-      className="w-full justify-center border-primary/20 bg-white/80 text-foreground shadow-sm backdrop-blur hover:bg-white"
+      className="w-full justify-center border border-slate-200 bg-white text-slate-900 shadow-sm hover:bg-slate-50"
       onClick={() => {
         setBusy(true);
         setTimeout(() => setBusy(false), 900);
@@ -175,10 +182,12 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="w-full border-white/10 bg-white text-slate-950 shadow-2xl shadow-black/20">
+    <Card className="w-full border border-slate-200 bg-white text-slate-900 shadow-xl shadow-slate-200/70">
       <CardHeader>
         <CardTitle className="text-2xl">Welcome back</CardTitle>
-        <CardDescription>Access your ratings and saved professors.</CardDescription>
+        <CardDescription>
+          Access your ratings and saved professors.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         <GoogleButton label="Continue with Google" />
@@ -231,7 +240,9 @@ export function LoginForm() {
                     <FormControl>
                       <Checkbox
                         checked={field.value}
-                        onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+                        onCheckedChange={(checked) =>
+                          field.onChange(Boolean(checked))
+                        }
                       />
                     </FormControl>
                     <FormLabel className="font-normal">Remember me</FormLabel>
@@ -246,11 +257,7 @@ export function LoginForm() {
               </Link>
             </div>
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={submitting}
-            >
+            <Button type="submit" className="w-full" disabled={submitting}>
               {submitting ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
@@ -262,7 +269,9 @@ export function LoginForm() {
             </Button>
 
             {status ? (
-              <p className="text-center text-sm text-muted-foreground">{status}</p>
+              <p className="text-center text-sm text-muted-foreground">
+                {status}
+              </p>
             ) : null}
           </form>
         </Form>
@@ -298,16 +307,22 @@ export function SignupForm() {
     setSubmitting(true);
     setStatus(null);
     await new Promise((resolve) => setTimeout(resolve, 1100));
-    setStatus(`Account created for ${values.name || values.email}. Check your inbox to verify.`);
+    setStatus(
+      `Account created for ${
+        values.name || values.email
+      }. Check your inbox to verify.`
+    );
     form.reset({ ...values, password: "", confirmPassword: "", terms: true });
     setSubmitting(false);
   }
 
   return (
-    <Card className="w-full border-white/10 bg-white text-slate-950 shadow-2xl shadow-black/20">
+    <Card className="w-full border border-slate-200 bg-white text-slate-900 shadow-xl shadow-slate-200/70">
       <CardHeader>
         <CardTitle className="text-2xl">Create your account</CardTitle>
-        <CardDescription>Sign up to rate professors and track your favorites.</CardDescription>
+        <CardDescription>
+          Sign up to rate professors and track your favorites.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         <GoogleButton label="Sign up with Google" />
@@ -389,17 +404,22 @@ export function SignupForm() {
               control={form.control}
               name="terms"
               render={({ field }) => (
-                <FormItem className="flex items-start gap-3 space-y-0 rounded-lg border border-dashed border-primary/20 bg-primary/5 p-3">
+                <FormItem className="flex items-start gap-3 space-y-0 rounded-lg border border-dashed border-slate-200 bg-slate-50 p-3">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
-                      onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+                      onCheckedChange={(checked) =>
+                        field.onChange(Boolean(checked))
+                      }
                     />
                   </FormControl>
                   <div className="space-y-1 leading-tight text-sm">
-                    <FormLabel className="font-semibold">Agree to the basics</FormLabel>
+                    <FormLabel className="font-semibold">
+                      Agree to the basics
+                    </FormLabel>
                     <FormDescription className="text-xs text-muted-foreground">
-                      By creating an account you accept our Terms, Privacy Policy, and community guidelines.
+                      By creating an account you accept our Terms, Privacy
+                      Policy, and community guidelines.
                     </FormDescription>
                   </div>
                   <FormMessage />
@@ -407,11 +427,7 @@ export function SignupForm() {
               )}
             />
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={submitting}
-            >
+            <Button type="submit" className="w-full" disabled={submitting}>
               {submitting ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
@@ -423,7 +439,9 @@ export function SignupForm() {
             </Button>
 
             {status ? (
-              <p className="text-center text-sm text-muted-foreground">{status}</p>
+              <p className="text-center text-sm text-muted-foreground">
+                {status}
+              </p>
             ) : null}
           </form>
         </Form>
@@ -455,15 +473,19 @@ export function ForgotPasswordForm() {
     setSubmitting(true);
     setStatus(null);
     await new Promise((resolve) => setTimeout(resolve, 900));
-    setStatus(`If an account exists for ${values.email}, we'll email reset instructions.`);
+    setStatus(
+      `If an account exists for ${values.email}, we'll email reset instructions.`
+    );
     setSubmitting(false);
   }
 
   return (
-    <Card className="w-full border-white/10 bg-white text-slate-950 shadow-2xl shadow-black/20">
+    <Card className="w-full border border-slate-200 bg-white text-slate-900 shadow-xl shadow-slate-200/70">
       <CardHeader>
         <CardTitle className="text-2xl">Reset your password</CardTitle>
-        <CardDescription>We'll email you a secure link to create a new password.</CardDescription>
+        <CardDescription>
+          We'll email you a secure link to create a new password.
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
         <Form {...form}>
@@ -491,11 +513,7 @@ export function ForgotPasswordForm() {
               )}
             />
 
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={submitting}
-            >
+            <Button type="submit" className="w-full" disabled={submitting}>
               {submitting ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
@@ -507,17 +525,25 @@ export function ForgotPasswordForm() {
             </Button>
 
             {status ? (
-              <p className="text-center text-sm text-muted-foreground">{status}</p>
+              <p className="text-center text-sm text-muted-foreground">
+                {status}
+              </p>
             ) : null}
           </form>
         </Form>
       </CardContent>
       <CardFooter className="justify-center text-sm text-muted-foreground gap-2">
-        <Link href="/login" className="font-semibold text-primary hover:underline">
+        <Link
+          href="/login"
+          className="font-semibold text-primary hover:underline"
+        >
           Back to sign in
         </Link>
         <span aria-hidden="true">•</span>
-        <Link href="/signup" className="font-semibold text-primary hover:underline">
+        <Link
+          href="/signup"
+          className="font-semibold text-primary hover:underline"
+        >
           Create account
         </Link>
       </CardFooter>

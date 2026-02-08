@@ -9,8 +9,8 @@ export const metadata: Metadata = {
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
-      <Navigation isHomepage />
+    <div className="min-h-screen bg-gradient-to-b from-white via-white to-slate-50">
+      <Navigation />
 
       <main className="container mx-auto flex min-h-[calc(100vh-96px)] items-center justify-center px-4 py-16">
         <div className="w-full max-w-xl">
