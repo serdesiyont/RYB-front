@@ -1,10 +1,11 @@
 "use client";
 
-import { use, useMemo, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
-import { professors, schools } from "@/lib/mockData";
+import { professors, reviews, schools } from "@/lib/mockData";
 
 const TAGS = [
   "Tough Grader",
@@ -33,16 +34,10 @@ const COURSES = ["GSD600", "GSD601", "GSD602", "CS50", "MATH101", "ENG201"];
 
 const ratingColor = (value: number) => {
   if (value <= 1) return "#dc2626";
-  if (value <= 2) return "#ec4899";
+  if (value <= 2) return "#f2994a";
   if (value <= 3) return "#facc15";
-  if (value <= 4) return "#bbf7d0";
+  if (value <= 4) return "#8ecf6f";
   return "#16a34a";
-};
-
-const boxBg = (value: number, current: number) => {
-  if (value !== current) return "bg-gray-200 hover:bg-gray-300";
-  const color = ratingColor(current);
-  return "text-white";
 };
 
 export default function ProfessorRatingDetail({
@@ -54,6 +49,25 @@ export default function ProfessorRatingDetail({
   const selectedProf = professors.find(
     (p) => p.id === parseInt(resolvedParams.id, 10)
   );
+  const searchParams = useSearchParams();
+
+  const professorTags = useMemo(() => {
+    if (!selectedProf) return [] as string[];
+
+    const tagCounts: Record<string, number> = {};
+    reviews
+      .filter((review) => review.professorId === selectedProf.id)
+      .forEach((review) => {
+        review.tags?.forEach((tag) => {
+          tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+        });
+      });
+
+    return Object.entries(tagCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([tag]) => tag);
+  }, [selectedProf]);
 
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [rating, setRating] = useState(0);
@@ -69,6 +83,40 @@ export default function ProfessorRatingDetail({
   const [grade, setGrade] = useState("");
   const [review, setReview] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const editing = searchParams.get("edit");
+    if (!editing) return;
+
+    const readNumber = (key: string) => {
+      const value = searchParams.get(key);
+      return value ? Number(value) || 0 : 0;
+    };
+
+    const readChoice = <T extends string>(
+      key: string,
+      choices: T[]
+    ): T | null => {
+      const value = searchParams.get(key);
+      return value && choices.includes(value as T) ? (value as T) : null;
+    };
+
+    setRating(readNumber("rating"));
+    setDifficulty(readNumber("difficulty"));
+    setRetake(readChoice("retake", ["yes", "no"]));
+    setCourseCode(searchParams.get("course") || "");
+    setTextbook(readChoice("textbook", ["yes", "no"]));
+    setAttendance(readChoice("attendance", ["mandatory", "optional"]));
+    setCredit(readChoice("credit", ["yes", "no"]));
+    setGrade(searchParams.get("grade") || "");
+    setReview(searchParams.get("review") || "");
+
+    const tagsParam = searchParams.get("tags");
+    if (tagsParam) {
+      const parsed = tagsParam.split(",").filter(Boolean).slice(0, 3);
+      setSelectedTags(parsed);
+    }
+  }, [searchParams]);
 
   const courseSuggestions = useMemo(() => {
     if (!courseCode) return COURSES.slice(0, 5);
@@ -120,7 +168,6 @@ export default function ProfessorRatingDetail({
       <main className="max-w-3xl mx-auto px-4 py-8">
         {/* Header */}
         <div className="mb-8">
-          <p className="mb-2 text-sm text-gray-600">Cambridge, MA</p>
           <h1 className="mb-1 text-4xl font-bold">{selectedProf.name}</h1>
           <p className="mb-3 text-lg text-gray-600">Add Rating</p>
           <p className="text-sm">
@@ -133,6 +180,19 @@ export default function ProfessorRatingDetail({
                 "University"}
             </Link>
           </p>
+
+          {professorTags.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2 text-sm">
+              {professorTags.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full bg-gray-200 px-3 py-1 font-semibold text-gray-800"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Select up to 3 tags */}

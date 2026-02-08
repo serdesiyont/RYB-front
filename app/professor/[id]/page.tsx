@@ -1,6 +1,3 @@
-'use client';
-
-import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { professors, reviews } from '@/lib/mockData';
@@ -8,13 +5,25 @@ import Header from '@/components/Header';
 import RatingChart from '@/components/RatingChart';
 import ReviewCard from '@/components/ReviewCard';
 
-export default function ProfessorPage({ params }: { params: { id: string } }) {
-  const professor = professors.find(p => p.id === parseInt(params.id));
-  const professorReviews = reviews.filter(r => r.professorId === parseInt(params.id));
+const PREVIEW_PROFESSOR_ID = 123456;
+
+interface ProfessorPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default async function ProfessorPage({ params }: ProfessorPageProps) {
+  const { id } = await params;
+  const numericId = Number(id);
+
+  const matchedProfessor = professors.find(p => p.id === numericId);
+  const professor = matchedProfessor ?? professors.find(p => p.id === PREVIEW_PROFESSOR_ID);
 
   if (!professor) {
     return <div className="p-4">Professor not found</div>;
   }
+
+  const professorReviews = reviews.filter(r => r.professorId === professor.id);
+  const isPreviewProfile = !matchedProfessor;
 
   const ratingDistribution = {
     5: professorReviews.filter(r => r.rating === 5).length,
@@ -41,6 +50,14 @@ export default function ProfessorPage({ params }: { params: { id: string } }) {
       <Header />
 
       <main className="max-w-6xl mx-auto px-4 py-8">
+        {isPreviewProfile && (
+          <div className="mb-6 rounded-lg bg-blue-50 p-4 text-sm text-blue-900">
+            Showing demo professor data. Update the URL to a real professor ID
+            to see live mock data, or use /professor/
+            {PREVIEW_PROFESSOR_ID}.
+          </div>
+        )}
+
         {/* Professor Header */}
         <div className="grid md:grid-cols-3 gap-8 mb-12">
           <div>
@@ -49,7 +66,10 @@ export default function ProfessorPage({ params }: { params: { id: string } }) {
               <div>
                 <h1 className="text-3xl font-bold">{professor.name}</h1>
                 <p className="text-gray-600">{professor.department}</p>
-                <Link href={`/school/${professor.schoolId}`} className="text-blue-600 underline text-sm">
+                <Link
+                  href={`/school/${professor.schoolId}`}
+                  className="text-blue-600 underline text-sm"
+                >
                   {professor.schoolName}
                 </Link>
               </div>
@@ -57,40 +77,58 @@ export default function ProfessorPage({ params }: { params: { id: string } }) {
 
             {/* Overall Rating */}
             <div className="mb-8">
-              <div className="text-6xl font-bold mb-2">{professor.averageRating.toFixed(1)}</div>
-              <p className="text-sm text-gray-600">Overall Quality Based on {professor.totalRatings} ratings</p>
+              <div className="text-6xl font-bold mb-2">
+                {professor.averageRating.toFixed(1)}
+              </div>
+              <p className="text-sm text-gray-600">
+                Overall Quality Based on {professor.totalRatings} ratings
+              </p>
             </div>
 
             {/* Stats */}
             <div className="space-y-4 mb-8">
               <div>
-                <div className="text-3xl font-bold">{(professor.wouldTakeAgain * 100).toFixed(0)}%</div>
+                <div className="text-3xl font-bold">
+                  {(professor.wouldTakeAgain * 100).toFixed(0)}%
+                </div>
                 <p className="text-sm text-gray-600">Would take again</p>
               </div>
               <div>
-                <div className="text-3xl font-bold">{professor.difficultyLevel.toFixed(1)}</div>
+                <div className="text-3xl font-bold">
+                  {professor.difficultyLevel.toFixed(1)}
+                </div>
                 <p className="text-sm text-gray-600">Level of Difficulty</p>
               </div>
             </div>
 
             {/* Action Buttons */}
             <div className="flex gap-3">
-              <Button className="bg-blue-600 text-white rounded-full">Rate →</Button>
-              <Button variant="outline" className="border-blue-600 text-blue-600 rounded-full bg-transparent">
+              <Button className="bg-black text-white rounded-full">Rate</Button>
+              <Button
+                variant="outline"
+                className="rounded-full border-black bg-transparent"
+              >
                 Compare
               </Button>
             </div>
 
             {/* I'm Professor */}
-            <button className="mt-6 underline text-sm">I'm Professor {professor.name}</button>
+            <button className="mt-6 underline text-sm">
+              I'm Professor {professor.name}
+            </button>
 
             {/* Tags */}
             {topTags.length > 0 && (
               <div className="mt-8">
-                <h3 className="font-bold mb-3">Professor {professor.name}'s Top Tags</h3>
+                <h3 className="font-bold mb-3">
+                  Professor {professor.name}'s Top Tags
+                </h3>
                 <div className="flex flex-wrap gap-2">
                   {topTags.map((tag, idx) => (
-                    <span key={idx} className="px-3 py-1 bg-gray-200 text-gray-800 text-xs font-semibold rounded">
+                    <span
+                      key={idx}
+                      className="px-3 py-1 bg-gray-200 text-gray-800 text-xs font-semibold rounded"
+                    >
                       {tag}
                     </span>
                   ))}
@@ -105,12 +143,12 @@ export default function ProfessorPage({ params }: { params: { id: string } }) {
           </div>
         </div>
 
-        {/* Similar Professors */}
+        {/* Similar Professors
         {professors.length > 1 && (
           <div className="mb-12 bg-blue-50 p-6 rounded-lg">
             <h3 className="font-bold text-lg mb-4">Similar Professors</h3>
             <div className="flex gap-4">
-              {professors.slice(1, 4).map(prof => (
+              {professors.slice(1, 4).map((prof) => (
                 <Link
                   key={prof.id}
                   href={`/professor/${prof.id}`}
@@ -124,7 +162,7 @@ export default function ProfessorPage({ params }: { params: { id: string } }) {
               ))}
             </div>
           </div>
-        )}
+        )} */}
 
         {/* Reviews */}
         <div>

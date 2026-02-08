@@ -1,20 +1,22 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { schools, professors } from '@/lib/mockData';
-import Header from '@/components/Header';
+import { useState } from "react";
+import Link from "next/link";
+import { schools, professors } from "@/lib/mockData";
+import Header from "@/components/Header";
 
 const ratingColor = (value: number) => {
-  if (value < 1) return 'bg-red-600 text-white';
-  if (value < 2) return 'bg-pink-500 text-white';
-  if (value < 3) return 'bg-yellow-300 text-gray-900';
-  if (value < 4) return 'bg-green-200 text-gray-900';
-  return 'bg-green-600 text-white';
+  if (value < 1) return "bg-red-600 text-white";
+  if (value < 2) return "bg-pink-500 text-white";
+  if (value < 3) return "bg-yellow-300 text-gray-900";
+  if (value < 4) return "bg-green-200 text-gray-900";
+  return "bg-green-600 text-white";
 };
 
 export default function BrowsePage() {
-  const [activeTab, setActiveTab] = useState<'professors' | 'schools'>('professors');
+  const [activeTab, setActiveTab] = useState<"professors" | "schools">(
+    "professors"
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -26,21 +28,21 @@ export default function BrowsePage() {
         {/* Tabs */}
         <div className="flex gap-4 mb-8 border-b">
           <button
-            onClick={() => setActiveTab('professors')}
+            onClick={() => setActiveTab("professors")}
             className={`px-4 py-2 font-semibold border-b-2 ${
-              activeTab === 'professors'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-600'
+              activeTab === "professors"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-gray-600"
             }`}
           >
             Professors ({professors.length})
           </button>
           <button
-            onClick={() => setActiveTab('schools')}
+            onClick={() => setActiveTab("schools")}
             className={`px-4 py-2 font-semibold border-b-2 ${
-              activeTab === 'schools'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-600'
+              activeTab === "schools"
+                ? "border-blue-600 text-blue-600"
+                : "border-transparent text-gray-600"
             }`}
           >
             Schools ({schools.length})
@@ -48,9 +50,9 @@ export default function BrowsePage() {
         </div>
 
         {/* Professors Grid */}
-        {activeTab === 'professors' && (
+        {activeTab === "professors" && (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {professors.map(prof => (
+            {professors.map((prof) => (
               <Link
                 key={prof.id}
                 href={`/professor/${prof.id}`}
@@ -62,7 +64,9 @@ export default function BrowsePage() {
                     <p className="text-sm text-gray-600">{prof.department}</p>
                   </div>
                   <span
-                    className={`rounded px-3 py-1 text-sm font-semibold ${ratingColor(prof.averageRating)}`}
+                    className={`rounded px-3 py-1 text-sm font-semibold ${ratingColor(
+                      prof.averageRating
+                    )}`}
                   >
                     {prof.averageRating.toFixed(1)}
                   </span>
@@ -72,7 +76,9 @@ export default function BrowsePage() {
 
                 <div className="flex justify-between text-xs text-gray-500">
                   <span>{prof.totalRatings} ratings</span>
-                  <span>{(prof.wouldTakeAgain * 100).toFixed(0)}% would take again</span>
+                  <span>
+                    {(prof.wouldTakeAgain * 100).toFixed(0)}% would take again
+                  </span>
                 </div>
               </Link>
             ))}
@@ -80,9 +86,9 @@ export default function BrowsePage() {
         )}
 
         {/* Schools Grid */}
-        {activeTab === 'schools' && (
+        {activeTab === "schools" && (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {schools.map(school => (
+            {schools.map((school) => (
               <Link
                 key={school.id}
                 href={`/school/${school.id}`}
@@ -94,7 +100,9 @@ export default function BrowsePage() {
                     <p className="text-sm text-gray-600">{school.location}</p>
                   </div>
                   <span
-                    className={`rounded px-3 py-1 text-sm font-semibold ${ratingColor(school.averageRating)}`}
+                    className={`rounded px-3 py-1 text-sm font-semibold ${ratingColor(
+                      school.averageRating
+                    )}`}
                   >
                     {school.averageRating.toFixed(1)}
                   </span>

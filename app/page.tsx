@@ -235,9 +235,7 @@ export default function Home() {
           <a href="#" className="hover:underline">
             Privacy Policy
           </a>
-          <a href="#" className="hover:underline">
-            Copyright Compliance Policy
-          </a>
+        
           <a href="#" className="hover:underline">
             CA Notice at Collection
           </a>

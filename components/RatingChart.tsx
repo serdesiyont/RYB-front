@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
 interface RatingChartProps {
   ratingDistribution: {
     5: number;
@@ -9,16 +12,35 @@ interface RatingChartProps {
 }
 
 export default function RatingChart({ ratingDistribution }: RatingChartProps) {
-  const total = Object.values(ratingDistribution).reduce((a, b) => a + b, 0);
   const maxCount = Math.max(...Object.values(ratingDistribution), 1);
 
   const ratings = [
-    { label: 'Awesome 5', value: ratingDistribution[5], count: 5 },
-    { label: 'Great 4', value: ratingDistribution[4], count: 4 },
-    { label: 'Good 3', value: ratingDistribution[3], count: 3 },
-    { label: 'OK 2', value: ratingDistribution[2], count: 2 },
-    { label: 'Awful 1', value: ratingDistribution[1], count: 1 },
+    { label: "Awesome 5", value: ratingDistribution[5], count: 5 },
+    { label: "Great 4", value: ratingDistribution[4], count: 4 },
+    { label: "Good 3", value: ratingDistribution[3], count: 3 },
+    { label: "OK 2", value: ratingDistribution[2], count: 2 },
+    { label: "Awful 1", value: ratingDistribution[1], count: 1 },
   ];
+
+  const barColors: Record<number, string> = {
+    1: "#ef4444", // red
+    2: "#f2994a", // orange
+    3: "#facc15", // yellow
+    4: "#8ecf6f", // light green
+    5: "#219653", // bright green
+  };
+
+  const targetWidths = useMemo(
+    () => ratings.map((r) => (r.value > 0 ? (r.value / maxCount) * 100 : 5)),
+    [ratings, maxCount]
+  );
+
+  const [widths, setWidths] = useState<number[]>(() => ratings.map(() => 0));
+
+  useEffect(() => {
+    const timer = setTimeout(() => setWidths(targetWidths), 75);
+    return () => clearTimeout(timer);
+  }, [targetWidths]);
 
   return (
     <div className="bg-gray-50 rounded-lg p-6">
@@ -32,9 +54,14 @@ export default function RatingChart({ ratingDistribution }: RatingChartProps) {
             </div>
 
             <div className="flex-1">
-              <div className="h-8 bg-blue-600 rounded" style={{
-                width: `${rating.value > 0 ? (rating.value / maxCount) * 100 : 5}%`,
-              }}/>
+              <div
+                className="h-8 rounded"
+                style={{
+                  backgroundColor: barColors[rating.count],
+                  width: `${widths[idx]}%`,
+                  transition: "width 600ms ease-out",
+                }}
+              />
             </div>
 
             <div className="w-12 text-right">

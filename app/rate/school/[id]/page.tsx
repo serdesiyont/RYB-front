@@ -1,16 +1,17 @@
 "use client";
 
-import { use, useState } from "react";
+import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
-import { schools } from "@/lib/mockData";
+import { reviews, schools } from "@/lib/mockData";
 
 const ratingColor = (value: number) => {
   if (value <= 1) return "#dc2626";
-  if (value <= 2) return "#ec4899";
+  if (value <= 2) return "#f2994a";
   if (value <= 3) return "#facc15";
-  if (value <= 4) return "#bbf7d0";
+  if (value <= 4) return "#8ecf6f";
   return "#16a34a";
 };
 
@@ -23,6 +24,25 @@ export default function SchoolRatingDetail({
   const selectedSchoolData = schools.find(
     (s) => s.id === parseInt(resolvedParams.id, 10)
   );
+  const searchParams = useSearchParams();
+
+  const topTags = useMemo(() => {
+    if (!selectedSchoolData) return [] as string[];
+
+    const tagCounts: Record<string, number> = {};
+    reviews
+      .filter((review) => review.schoolId === selectedSchoolData.id)
+      .forEach((review) => {
+        review.tags?.forEach((tag) => {
+          tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+        });
+      });
+
+    return Object.entries(tagCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([tag]) => tag);
+  }, [selectedSchoolData]);
 
   const [ratings, setRatings] = useState({
     reputation: 0,
@@ -38,6 +58,33 @@ export default function SchoolRatingDetail({
   });
   const [review, setReview] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const editing = searchParams.get("edit");
+    if (!editing) return;
+
+    const readNumber = (key: keyof typeof ratings) => {
+      const value = searchParams.get(key);
+      return value ? Number(value) || 0 : 0;
+    };
+
+    setRatings((prev) => ({
+      ...prev,
+      reputation: readNumber("reputation"),
+      location: readNumber("location"),
+      opportunities: readNumber("opportunities"),
+      facilities: readNumber("facilities"),
+      internet: readNumber("internet"),
+      safety: readNumber("safety"),
+      food: readNumber("food"),
+      clubs: readNumber("clubs"),
+      happiness: readNumber("happiness"),
+      social: readNumber("social"),
+    }));
+
+    const reviewParam = searchParams.get("review");
+    if (reviewParam) setReview(reviewParam);
+  }, [searchParams]);
 
   if (!selectedSchoolData) {
     return <div className="p-4">School not found</div>;
@@ -82,6 +129,19 @@ export default function SchoolRatingDetail({
           </p>
           <h1 className="text-4xl font-bold mb-1">{selectedSchoolData.name}</h1>
           <p className="text-lg text-gray-600">Add Rating</p>
+
+          {topTags.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-2 text-sm">
+              {topTags.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full bg-gray-200 px-3 py-1 font-semibold text-gray-800"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Reputation */}
@@ -94,18 +154,12 @@ export default function SchoolRatingDetail({
               <button
                 key={level}
                 onClick={() => handleRatingChange("reputation", level)}
-                className={`w-12 h-12 rounded-lg transition ${
-                  level <= ratings.reputation
-                    ? "bg-gray-400"
-                    : "bg-gray-200 hover:bg-gray-300"
-                }`}
                 style={{
                   backgroundColor:
                     level <= ratings.reputation && ratings.reputation > 0
                       ? ratingColor(ratings.reputation)
                       : "#e5e7eb",
                 }}
-                className="w-12 h-12 rounded-lg transition"
               />
             ))}
           </div>

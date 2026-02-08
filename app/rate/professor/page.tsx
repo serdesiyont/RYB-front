@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import Header from '@/components/Header';
-import { professors } from '@/lib/mockData';
+import Link from "next/link";
+import Header from "@/components/Header";
+import { professors } from "@/lib/mockData";
 
 const ratingColor = (value: number) => {
-  if (value < 1) return 'bg-red-600 text-white';
-  if (value < 2) return 'bg-pink-500 text-white';
-  if (value < 3) return 'bg-yellow-300 text-gray-900';
-  if (value < 4) return 'bg-green-200 text-gray-900';
-  return 'bg-green-600 text-white';
+  if (value < 1) return "bg-red-600 text-white";
+  if (value < 2) return "bg-pink-500 text-white";
+  if (value < 3) return "bg-yellow-300 text-gray-900";
+  if (value < 4) return "bg-green-200 text-gray-900";
+  return "bg-green-600 text-white";
 };
 
 export default function ProfessorRatingPage() {
@@ -38,13 +38,15 @@ export default function ProfessorRatingPage() {
                 </div>
                 <span
                   className={`rounded-full px-3 py-1 text-sm font-semibold ${ratingColor(
-                    prof.averageRating,
+                    prof.averageRating
                   )}`}
                 >
                   {prof.averageRating.toFixed(1)}
                 </span>
               </div>
-              <p className="mt-3 text-sm text-gray-600">{prof.totalRatings} ratings</p>
+              <p className="mt-3 text-sm text-gray-600">
+                {prof.totalRatings} ratings
+              </p>
             </Link>
           ))}
         </div>
