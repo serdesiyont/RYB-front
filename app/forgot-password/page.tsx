@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Navigation from "@/components/Navigation";
-import { ForgotPasswordForm } from "@/components/auth/AuthForms";
+import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
 
 export const metadata: Metadata = {
   title: "Reset password | Rate Your Professors",

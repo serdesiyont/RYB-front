@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Navigation from "@/components/Navigation";
-import { SignupForm } from "@/components/auth/AuthForms";
+import { SignupForm } from "@/components/auth/SignupForm";
 
 export const metadata: Metadata = {
   title: "Create account | Rate Your Professors",

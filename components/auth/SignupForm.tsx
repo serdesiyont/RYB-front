@@ -1,0 +1,224 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { Loader2, Mail, UserRound } from "lucide-react";
+
+import {
+  AuthDivider,
+  GoogleButton,
+  PasswordField,
+} from "@/components/auth/shared";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+
+const signupSchema = z
+  .object({
+    name: z.string().min(2, "Name must be at least 2 characters"),
+    email: z.string().email("Enter a valid email"),
+    password: z
+      .string()
+      .min(8, "Use 8 or more characters")
+      .regex(/^(?=.*[A-Z])(?=.*\d).+$/, "Add a capital letter and a number"),
+    confirmPassword: z.string(),
+    terms: z.literal(true, {
+      errorMap: () => ({ message: "You need to accept the terms to continue" }),
+    }),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords must match",
+    path: ["confirmPassword"],
+  });
+
+export type SignupValues = z.infer<typeof signupSchema>;
+
+export function SignupForm() {
+  const form = useForm<SignupValues>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      terms: false,
+    },
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
+
+  async function onSubmit(values: SignupValues) {
+    setSubmitting(true);
+    setStatus(null);
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+    setStatus(
+      `Account created for ${
+        values.name || values.email
+      }. Check your inbox to verify.`
+    );
+    form.reset({ ...values, password: "", confirmPassword: "", terms: true });
+    setSubmitting(false);
+  }
+
+  return (
+    <Card className="w-full border border-slate-200 bg-white text-slate-900 shadow-xl shadow-slate-200/70">
+      <CardHeader>
+        <CardTitle className="text-2xl">Create your account</CardTitle>
+        <CardDescription>
+          Sign up to rate professors and track your favorites.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <GoogleButton label="Sign up with Google" />
+        <AuthDivider />
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem className="space-y-1.5">
+                  <FormLabel>Full name</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <UserRound className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Alex Johnson"
+                        className="pl-10"
+                        autoComplete="name"
+                        {...field}
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem className="space-y-1.5">
+                  <FormLabel>Email</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        type="email"
+                        placeholder="you@example.com"
+                        className="pl-10"
+                        autoComplete="email"
+                        {...field}
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <PasswordField
+                  label="Password"
+                  placeholder="Create a password"
+                  description="Use at least 8 characters with a number and capital letter"
+                  field={field}
+                />
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="confirmPassword"
+              render={({ field }) => (
+                <PasswordField
+                  label="Confirm password"
+                  placeholder="Re-enter your password"
+                  field={field}
+                />
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="terms"
+              render={({ field }) => (
+                <FormItem className="flex items-start gap-3 space-y-0 rounded-lg border border-dashed border-slate-200 bg-slate-50 p-3">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={(checked) =>
+                        field.onChange(Boolean(checked))
+                      }
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-tight text-sm">
+                    <FormLabel className="font-semibold">
+                      Agree to the basics
+                    </FormLabel>
+                    <FormDescription className="text-xs text-muted-foreground">
+                      By creating an account you accept our Terms, Privacy
+                      Policy, and community guidelines.
+                    </FormDescription>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <Button type="submit" className="w-full" disabled={submitting}>
+              {submitting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Creating account
+                </>
+              ) : (
+                "Create account"
+              )}
+            </Button>
+
+            {status ? (
+              <p className="text-center text-sm text-muted-foreground">
+                {status}
+              </p>
+            ) : null}
+          </form>
+        </Form>
+      </CardContent>
+      <CardFooter className="justify-center text-sm text-muted-foreground">
+        <span>Already have an account?</span>
+        <Link
+          href="/login"
+          className="ml-1 font-semibold text-primary hover:underline"
+        >
+          Sign in
+        </Link>
+      </CardFooter>
+    </Card>
+  );
+}

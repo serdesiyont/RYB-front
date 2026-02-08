@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface NavigationProps {
@@ -9,6 +10,8 @@ interface NavigationProps {
 }
 
 export default function Navigation({ isHomepage = false }: NavigationProps) {
+  const userName = "Serdesiyon"; // placeholder user name until wired to auth
+  const userInitial = userName.charAt(0).toUpperCase();
   const [isLoggedIn, setIsLoggedIn] = useState(true);
   const [showDropdown, setShowDropdown] = useState(false);
   const [searchType, setSearchType] = useState<"professors" | "schools">(
@@ -150,9 +153,10 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
                   </Button>
                   <button
                     onClick={() => setShowMobileMenu(!showMobileMenu)}
-                    className="text-xs font-semibold tracking-wide uppercase rounded-full border border-white px-3 py-1.5 hover:bg-white hover:text-black"
+                    className="rounded-md border border-white bg-transparent p-2 text-white hover:bg-white hover:text-black"
+                    aria-label="Account menu"
                   >
-                    Menu
+                    <User className="size-4" />
                   </button>
                   {showMobileMenu && (
                     <div className="absolute right-0 top-full mt-2 bg-white text-black rounded-lg shadow-lg py-2 w-48">
