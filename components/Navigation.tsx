@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { schools } from "@/lib/mockData";
 
 interface NavigationProps {
   isHomepage?: boolean;
@@ -124,18 +123,18 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
             /* Homepage: Show auth buttons directly */
             <div className="flex items-center gap-2">
               <Button
-                onClick={() => setIsLoggedIn(true)}
+                asChild
                 variant="outline"
                 className="bg-transparent text-white border-white hover:bg-white hover:text-black text-xs px-4 py-1.5"
               >
-                Sign Up
+                <Link href="/signup">Sign Up</Link>
               </Button>
               <Button
-                onClick={() => setIsLoggedIn(true)}
+                asChild
                 variant="outline"
                 className="bg-transparent text-white border-white hover:bg-white hover:text-black text-xs px-4 py-1.5"
               >
-                Log In
+                <Link href="/login">Log In</Link>
               </Button>
             </div>
           ) : (
@@ -152,24 +151,20 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
                 <div className="absolute right-0 top-full mt-2 bg-white text-black rounded-lg shadow-lg py-2 w-48">
                   {!isLoggedIn ? (
                     <>
-                      <button
-                        onClick={() => {
-                          setIsLoggedIn(true);
-                          setShowMobileMenu(false);
-                        }}
+                      <Link
+                        href="/login"
                         className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm font-medium"
+                        onClick={() => setShowMobileMenu(false)}
                       >
                         Log In
-                      </button>
-                      <button
-                        onClick={() => {
-                          setIsLoggedIn(true);
-                          setShowMobileMenu(false);
-                        }}
+                      </Link>
+                      <Link
+                        href="/signup"
                         className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm font-medium"
+                        onClick={() => setShowMobileMenu(false)}
                       >
                         Sign Up
-                      </button>
+                      </Link>
                     </>
                   ) : (
                     <>
@@ -278,18 +273,18 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
         {isHomepage ? (
           <div className="flex ml-180 items-center gap-3">
             <Button
-              onClick={() => setIsLoggedIn(true)}
+              asChild
               variant="outline"
               className="bg-transparent rounded-full px-8 text-white border-white hover:bg-white hover:text-black hover:scale-105 transition-all duration-300 text-sm"
             >
-              Log In
+              <Link href="/login">Log In</Link>
             </Button>
             <Button
-              onClick={() => setIsLoggedIn(true)}
+              asChild
               variant="outline"
               className="bg-transparent rounded-full px-8 text-white border-white hover:bg-black hover:text-white hover:scale-105 transition-all duration-300 text-sm"
             >
-              Sign Up
+              <Link href="/signup">Sign Up</Link>
             </Button>
           </div>
         ) : (
@@ -297,17 +292,18 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
             {!isLoggedIn ? (
               <>
                 <Button
-                  onClick={() => setIsLoggedIn(true)}
+                  asChild
                   variant="ghost"
                   className="text-white hover:text-black text-sm font-medium rounded-full px-6"
                 >
-                  Log In
+                  <Link href="/login">Log In</Link>
                 </Button>
                 <Button
+                  asChild
                   variant="outline"
                   className="bg-white text-black border-white hover:bg-black hover:text-white text-sm font-medium rounded-full px-6"
                 >
-                  Sign Up
+                  <Link href="/signup">Sign Up</Link>
                 </Button>
               </>
             ) : (
