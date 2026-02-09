@@ -58,7 +58,7 @@ export function LoginForm() {
   async function onSubmit(values: LoginValues) {
     setSubmitting(true);
     setStatus(null);
-    
+
     try {
       const { data, error } = await authClient.signIn.email({
         email: values.email,
@@ -87,7 +87,7 @@ export function LoginForm() {
     try {
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/",
+        callbackURL: "http://localhost:4000/",
       });
     } catch (err) {
       setStatus("Failed to sign in with Google. Please try again.");
@@ -104,7 +104,11 @@ export function LoginForm() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
-        <GoogleButton label="Continue with Google" onClick={handleGoogleSignIn} disabled={submitting} />
+        <GoogleButton
+          label="Continue with Google"
+          onClick={handleGoogleSignIn}
+          disabled={submitting}
+        />
         <AuthDivider />
 
         <Form {...form}>

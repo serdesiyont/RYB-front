@@ -57,11 +57,11 @@ export function PasswordField({
   );
 }
 
-export function GoogleButton({ 
-  label, 
-  onClick, 
-  disabled 
-}: { 
+export function GoogleButton({
+  label,
+  onClick,
+  disabled,
+}: {
   label: string;
   onClick?: () => void;
   disabled?: boolean;

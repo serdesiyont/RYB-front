@@ -8,6 +8,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Loader2, Mail, UserRound } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
+import {} from './LoginForm';
 
 import {
   AuthDivider,
@@ -15,6 +16,14 @@ import {
   PasswordField,
 } from "@/components/auth/shared";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Card,
   CardContent,
@@ -69,11 +78,16 @@ export function SignupForm() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
+  const [verificationOpen, setVerificationOpen] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState<string | null>(
+    null
+  );
+  const [verificationCopy, setVerificationCopy] = useState<string>("");
 
   async function onSubmit(values: SignupValues) {
     setSubmitting(true);
     setStatus(null);
-    
+
     try {
       const { data, error } = await authClient.signUp.email({
         email: values.email,
@@ -82,27 +96,28 @@ export function SignupForm() {
       });
 
       if (error) {
-        setStatus(error.message || "Failed to create account. Please try again.");
+        setStatus(
+          error.message || "Failed to create account. Please try again."
+        );
         setSubmitting(false);
         return;
       }
 
-      // Send verification email
+      // Send verification email and surface a modal for the next step
+      let message = `We just sent a verification email to ${values.email}.`;
       try {
         await authClient.sendVerificationEmail({
           email: values.email,
         });
-        
-        setStatus(
-          `Account created successfully! Please check your email inbox (${values.email}) to verify your account before signing in.`
-        );
       } catch (emailError) {
-        // Account created but email failed - still show success
-        setStatus(
-          `Account created successfully! You may need to verify your email before signing in. Check your inbox at ${values.email}.`
-        );
+        // Account created but email failed - still prompt to verify manually
+        message = `Account created! If you do not see an email at ${values.email}, check spam or resend from the login page.`;
       }
-      
+
+      setVerificationEmail(values.email);
+      setVerificationCopy(message);
+      setVerificationOpen(true);
+
       // Don't auto-redirect, let user read the verification message
       setSubmitting(false);
     } catch (err) {
@@ -116,7 +131,7 @@ export function SignupForm() {
     try {
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/",
+        callbackURL: "http://localhost:4000/",
       });
     } catch (err) {
       setStatus("Failed to sign up with Google. Please try again.");
@@ -133,7 +148,11 @@ export function SignupForm() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
-        <GoogleButton label="Sign up with Google" onClick={handleGoogleSignUp} disabled={submitting} />
+        <GoogleButton
+          label="Sign up with Google"
+          onClick={handleGoogleSignUp}
+          disabled={submitting}
+        />
         <AuthDivider />
 
         <Form {...form}>
@@ -247,18 +266,8 @@ export function SignupForm() {
             </Button>
 
             {status ? (
-              <div className="text-center text-sm">
-                <p className={status.includes("successfully") ? "text-green-600 font-medium" : "text-muted-foreground"}>
-                  {status}
-                </p>
-                {status.includes("verify your email") && (
-                  <Link 
-                    href="/login" 
-                    className="mt-2 inline-block text-primary hover:underline font-semibold"
-                  >
-                    Go to login
-                  </Link>
-                )}
+              <div className="text-center text-sm text-destructive">
+                {status}
               </div>
             ) : null}
           </form>
@@ -273,6 +282,48 @@ export function SignupForm() {
           Sign in
         </Link>
       </CardFooter>
+      <Dialog open={verificationOpen} onOpenChange={setVerificationOpen}>
+        <DialogContent className="max-w-md text-center sm:text-left">
+          <DialogHeader className="items-center text-center sm:items-start sm:text-left">
+            <div className="flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <Mail className="size-6" aria-hidden />
+            </div>
+            <DialogTitle>Verify your email</DialogTitle>
+            <DialogDescription>
+              {verificationCopy ||
+                `We just sent a verification link to ${verificationEmail ?? "your email"}.`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <p>
+              Open your inbox and click the verification link to activate your
+              account.
+            </p>
+            <p>
+              After verifying, sign in to start rating professors and saving
+              favorites.
+            </p>
+          </div>
+          <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="ghost"
+              className="w-full sm:w-auto"
+              onClick={() => setVerificationOpen(false)}
+            >
+              Close
+            </Button>
+            <Button
+              className="w-full sm:w-auto"
+              onClick={() => {
+                setVerificationOpen(false);
+                router.push("/login");
+              }}
+            >
+              Go to login
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }
