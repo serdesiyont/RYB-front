@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Loader2, Mail, UserRound } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
 
 import {
   AuthDivider,
@@ -54,6 +56,7 @@ const signupSchema = z
 export type SignupValues = z.infer<typeof signupSchema>;
 
 export function SignupForm() {
+  const router = useRouter();
   const form = useForm<SignupValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -70,14 +73,55 @@ export function SignupForm() {
   async function onSubmit(values: SignupValues) {
     setSubmitting(true);
     setStatus(null);
-    await new Promise((resolve) => setTimeout(resolve, 1100));
-    setStatus(
-      `Account created for ${
-        values.name || values.email
-      }. Check your inbox to verify.`
-    );
-    form.reset({ ...values, password: "", confirmPassword: "", terms: true });
-    setSubmitting(false);
+    
+    try {
+      const { data, error } = await authClient.signUp.email({
+        email: values.email,
+        password: values.password,
+        name: values.name,
+      });
+
+      if (error) {
+        setStatus(error.message || "Failed to create account. Please try again.");
+        setSubmitting(false);
+        return;
+      }
+
+      // Send verification email
+      try {
+        await authClient.sendVerificationEmail({
+          email: values.email,
+        });
+        
+        setStatus(
+          `Account created successfully! Please check your email inbox (${values.email}) to verify your account before signing in.`
+        );
+      } catch (emailError) {
+        // Account created but email failed - still show success
+        setStatus(
+          `Account created successfully! You may need to verify your email before signing in. Check your inbox at ${values.email}.`
+        );
+      }
+      
+      // Don't auto-redirect, let user read the verification message
+      setSubmitting(false);
+    } catch (err) {
+      setStatus("An unexpected error occurred. Please try again.");
+      setSubmitting(false);
+    }
+  }
+
+  async function handleGoogleSignUp() {
+    setSubmitting(true);
+    try {
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/",
+      });
+    } catch (err) {
+      setStatus("Failed to sign up with Google. Please try again.");
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -89,7 +133,7 @@ export function SignupForm() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
-        <GoogleButton label="Sign up with Google" />
+        <GoogleButton label="Sign up with Google" onClick={handleGoogleSignUp} disabled={submitting} />
         <AuthDivider />
 
         <Form {...form}>
@@ -203,9 +247,19 @@ export function SignupForm() {
             </Button>
 
             {status ? (
-              <p className="text-center text-sm text-muted-foreground">
-                {status}
-              </p>
+              <div className="text-center text-sm">
+                <p className={status.includes("successfully") ? "text-green-600 font-medium" : "text-muted-foreground"}>
+                  {status}
+                </p>
+                {status.includes("verify your email") && (
+                  <Link 
+                    href="/login" 
+                    className="mt-2 inline-block text-primary hover:underline font-semibold"
+                  >
+                    Go to login
+                  </Link>
+                )}
+              </div>
             ) : null}
           </form>
         </Form>

@@ -57,7 +57,15 @@ export function PasswordField({
   );
 }
 
-export function GoogleButton({ label }: { label: string }) {
+export function GoogleButton({ 
+  label, 
+  onClick, 
+  disabled 
+}: { 
+  label: string;
+  onClick?: () => void;
+  disabled?: boolean;
+}) {
   const [busy, setBusy] = useState(false);
 
   const GoogleMark = (
@@ -92,10 +100,14 @@ export function GoogleButton({ label }: { label: string }) {
       variant="outline"
       className="w-full justify-center border border-slate-200 bg-white text-slate-900 shadow-sm hover:bg-slate-50"
       onClick={() => {
-        setBusy(true);
-        setTimeout(() => setBusy(false), 900);
+        if (onClick) {
+          onClick();
+        } else {
+          setBusy(true);
+          setTimeout(() => setBusy(false), 900);
+        }
       }}
-      disabled={busy}
+      disabled={disabled || busy}
     >
       {busy ? <Loader2 className="size-4 animate-spin" /> : GoogleMark}
       <span>{label}</span>

@@ -2,17 +2,23 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/components/auth/auth-provider";
+import { authClient } from "@/lib/auth-client";
 
 interface NavigationProps {
   isHomepage?: boolean;
 }
 
 export default function Navigation({ isHomepage = false }: NavigationProps) {
-  const userName = "Serdesiyon"; // placeholder user name until wired to auth
+  const router = useRouter();
+  const { session, isLoading } = useAuth();
+  const fullName = session?.user?.name || "";
+  const userName = fullName.split(" ")[0] || "User";
   const userInitial = userName.charAt(0).toUpperCase();
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
+  const isLoggedIn = !!session;
   const [showDropdown, setShowDropdown] = useState(false);
   const [searchType, setSearchType] = useState<"professors" | "schools">(
     "professors"
@@ -156,7 +162,7 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
                     className="rounded-md border border-white bg-transparent p-2 text-white hover:bg-white hover:text-black"
                     aria-label="Account menu"
                   >
-                    <User className="size-4" />
+                    {userInitial}
                   </button>
                   {showMobileMenu && (
                     <div className="absolute right-0 top-full mt-2 bg-white text-black rounded-lg shadow-lg py-2 w-48">
@@ -176,9 +182,11 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
                       </Link>
                       <div className="border-t border-gray-200 my-1" />
                       <button
-                        onClick={() => {
-                          setIsLoggedIn(false);
+                        onClick={async () => {
+                          await authClient.signOut();
                           setShowMobileMenu(false);
+                          router.push("/");
+                          router.refresh();
                         }}
                         className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm font-medium"
                       >
@@ -238,9 +246,11 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
 
                       <div className="border-t border-gray-200 my-1" />
                       <button
-                        onClick={() => {
-                          setIsLoggedIn(false);
+                        onClick={async () => {
+                          await authClient.signOut();
                           setShowMobileMenu(false);
+                          router.push("/");
+                          router.refresh();
                         }}
                         className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm font-medium"
                       >
@@ -344,7 +354,7 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
                     onClick={() => setShowDropdown(!showDropdown)}
                     className="text-sm font-semibold hover:text-gray-300 flex items-center gap-2"
                   >
-                    HEY, SERDESIYON
+                    Hey, {userName}
                     <span className="text-xs">▼</span>
                   </button>
 
@@ -366,9 +376,11 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
                       </Link>
                       <div className="border-t border-gray-200 my-1" />
                       <button
-                        onClick={() => {
-                          setIsLoggedIn(false);
+                        onClick={async () => {
+                          await authClient.signOut();
                           setShowDropdown(false);
+                          router.push("/");
+                          router.refresh();
                         }}
                         className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm font-medium"
                       >
@@ -414,7 +426,7 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
                     onClick={() => setShowDropdown(!showDropdown)}
                     className="text-sm font-semibold hover:text-gray-300 flex items-center gap-2"
                   >
-                    HEY, SERDESIYON
+                    Hey, {userName}
                     <span className="text-xs">▼</span>
                   </button>
 
@@ -438,9 +450,11 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
 
                       <div className="border-t border-gray-200 my-1" />
                       <button
-                        onClick={() => {
-                          setIsLoggedIn(false);
+                        onClick={async () => {
+                          await authClient.signOut();
                           setShowDropdown(false);
+                          router.push("/");
+                          router.refresh();
                         }}
                         className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm font-medium"
                       >

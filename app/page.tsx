@@ -9,14 +9,7 @@ import { schools, professors } from "@/lib/mockData";
 import { useAuth } from "@/components/auth/auth-provider";
 
 export default function Home() {
-const {session, isLoading} = useAuth();
-
-if(!session) {
-  console.log("No session found");
-} else {
-  console.log("Session found:", session.user?.name);
-}
-
+  const { session, isLoading } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [showWelcome, setShowWelcome] = useState(true);
@@ -24,7 +17,8 @@ if(!session) {
     "professor"
   );
   const [showSchoolSearch, setShowSchoolSearch] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(true);
+
+  const isLoggedIn = !!session;
 
   const filteredProfessors = professors.filter((prof) =>
     prof.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -245,7 +239,7 @@ if(!session) {
           <a href="#" className="hover:underline">
             Privacy Policy
           </a>
-        
+
           <a href="#" className="hover:underline">
             CA Notice at Collection
           </a>

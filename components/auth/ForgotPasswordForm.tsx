@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Loader2, Mail } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -43,11 +44,30 @@ export function ForgotPasswordForm() {
   async function onSubmit(values: ForgotPasswordValues) {
     setSubmitting(true);
     setStatus(null);
-    await new Promise((resolve) => setTimeout(resolve, 900));
-    setStatus(
-      `If an account exists for ${values.email}, we'll email reset instructions.`
-    );
-    setSubmitting(false);
+
+    try {
+      const { data, error } = await authClient.forgetPassword({
+        email: values.email,
+        redirectTo: "/reset-password",
+      });
+
+      if (error) {
+        setStatus(
+          error.message || "Failed to send reset email. Please try again."
+        );
+        setSubmitting(false);
+        return;
+      }
+
+      setStatus(
+        `If an account exists for ${values.email}, we'll email reset instructions.`
+      );
+      form.reset();
+      setSubmitting(false);
+    } catch (err) {
+      setStatus("An unexpected error occurred. Please try again.");
+      setSubmitting(false);
+    }
   }
 
   return (

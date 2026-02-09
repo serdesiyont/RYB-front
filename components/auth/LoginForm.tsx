@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Loader2, Mail } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
 
 import {
   AuthDivider,
@@ -41,6 +43,7 @@ const loginSchema = z.object({
 export type LoginValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
+  const router = useRouter();
   const form = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -55,9 +58,41 @@ export function LoginForm() {
   async function onSubmit(values: LoginValues) {
     setSubmitting(true);
     setStatus(null);
-    await new Promise((resolve) => setTimeout(resolve, 900));
-    setStatus(`Signed in as ${values.email}. Redirecting...`);
-    setSubmitting(false);
+    
+    try {
+      const { data, error } = await authClient.signIn.email({
+        email: values.email,
+        password: values.password,
+      });
+
+      if (error) {
+        setStatus(error.message || "Failed to sign in. Please try again.");
+        setSubmitting(false);
+        return;
+      }
+
+      setStatus(`Signed in successfully! Redirecting...`);
+      setTimeout(() => {
+        router.push("/");
+        router.refresh();
+      }, 500);
+    } catch (err) {
+      setStatus("An unexpected error occurred. Please try again.");
+      setSubmitting(false);
+    }
+  }
+
+  async function handleGoogleSignIn() {
+    setSubmitting(true);
+    try {
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/",
+      });
+    } catch (err) {
+      setStatus("Failed to sign in with Google. Please try again.");
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -69,7 +104,7 @@ export function LoginForm() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
-        <GoogleButton label="Continue with Google" />
+        <GoogleButton label="Continue with Google" onClick={handleGoogleSignIn} disabled={submitting} />
         <AuthDivider />
 
         <Form {...form}>
