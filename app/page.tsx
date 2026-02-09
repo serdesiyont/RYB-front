@@ -6,8 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navigation from "@/components/Navigation";
 import { schools, professors } from "@/lib/mockData";
+import { useAuth } from "@/components/auth/auth-provider";
 
 export default function Home() {
+const {session, isLoading} = useAuth();
+
+if(!session) {
+  console.log("No session found");
+} else {
+  console.log("Session found:", session.user?.name);
+}
+
+
   const [searchQuery, setSearchQuery] = useState("");
   const [showWelcome, setShowWelcome] = useState(true);
   const [searchMode, setSearchMode] = useState<"professor" | "school">(
