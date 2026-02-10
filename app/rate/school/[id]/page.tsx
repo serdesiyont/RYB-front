@@ -99,16 +99,11 @@ export default function SchoolRatingDetail({
     let active = true;
     async function load() {
       try {
-        const school = await fetchSchoolById(
-          parseInt(resolvedParams.id, 10),
-          { allowFallbackToRate: false }
-        );
+        const school = await fetchSchoolById(resolvedParams.id);
         if (!active) return;
         setSelectedSchoolData(school);
 
-        const schoolReviews = await fetchSchoolReviews(school.id, {
-          allowFallbackToRate: false,
-        });
+        const schoolReviews = await fetchSchoolReviews(school.id);
         if (!active) return;
         setFetchedReviews(schoolReviews);
       } catch (err) {

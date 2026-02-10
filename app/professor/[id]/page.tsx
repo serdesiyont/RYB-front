@@ -9,49 +9,58 @@ import {
   isNotFound as isProfessorNotFound,
 } from "@/lib/api/professors";
 
-const PREVIEW_PROFESSOR_ID = 123456;
-
 interface ProfessorPageProps {
   params: Promise<{ id: string }>;
 }
 
-async function resolveProfessor(id: number) {
-  try {
-    return await fetchProfessorById(id, { useMockOnError: true });
-  } catch (error) {
-    if (isProfessorNotFound(error) && id !== PREVIEW_PROFESSOR_ID) {
-      return fetchProfessorById(PREVIEW_PROFESSOR_ID, { useMockOnError: true });
-    }
-    throw error;
-  }
-}
-
 export default async function ProfessorPage({ params }: ProfessorPageProps) {
   const { id } = await params;
-  const numericId = Number.isNaN(Number(id)) ? PREVIEW_PROFESSOR_ID : Number(id);
+  const professorId = id;
 
-  const professor = await resolveProfessor(numericId);
-  if (!professor) {
-    return <div className="p-4">Professor not found</div>;
+  if (!professorId) {
+    return <div className="p-4">Invalid professor id</div>;
   }
 
-  const professorReviews = await fetchProfessorReviews(professor.id, {
-    useMockOnError: true,
-  });
-  const isPreviewProfile = professor.id === PREVIEW_PROFESSOR_ID &&
-    numericId !== PREVIEW_PROFESSOR_ID;
+  let professor: Awaited<ReturnType<typeof fetchProfessorById>>;
+  try {
+    professor = await fetchProfessorById(professorId);
+  } catch (error) {
+    if (isProfessorNotFound(error)) {
+      return <div className="p-4">Professor not found</div>;
+    }
+    return (
+      <div className="p-4">
+        Unable to load professor details right now. Please try again later.
+      </div>
+    );
+  }
+
+  let professorReviews: Awaited<ReturnType<typeof fetchProfessorReviews>> = [];
+  let reviewsError: string | null = null;
+
+  try {
+    professorReviews = await fetchProfessorReviews(String(professor.id));
+  } catch (error) {
+    console.error("Error fetching professor reviews:", error);
+    reviewsError =
+      error instanceof Error
+        ? `Unable to load reviews: ${error.message}`
+        : "Unable to load professor reviews right now.";
+  }
 
   const ratingDistribution = {
-    5: professorReviews.filter(r => r.rating === 5).length,
-    4: professorReviews.filter(r => Math.floor(r.rating) === 4 || r.rating >= 4.0 && r.rating < 4.5).length,
-    3: professorReviews.filter(r => Math.floor(r.rating) === 3).length,
-    2: professorReviews.filter(r => Math.floor(r.rating) === 2).length,
-    1: professorReviews.filter(r => Math.floor(r.rating) === 1).length,
+    5: professorReviews.filter((r) => r.rating === 5).length,
+    4: professorReviews.filter(
+      (r) => Math.floor(r.rating) === 4 || (r.rating >= 4.0 && r.rating < 4.5)
+    ).length,
+    3: professorReviews.filter((r) => Math.floor(r.rating) === 3).length,
+    2: professorReviews.filter((r) => Math.floor(r.rating) === 2).length,
+    1: professorReviews.filter((r) => Math.floor(r.rating) === 1).length,
   };
 
   const tagCounts: Record<string, number> = {};
-  professorReviews.forEach(review => {
-    review.tags?.forEach(tag => {
+  professorReviews.forEach((review) => {
+    review.tags?.forEach((tag) => {
       tagCounts[tag] = (tagCounts[tag] || 0) + 1;
     });
   });
@@ -66,14 +75,6 @@ export default async function ProfessorPage({ params }: ProfessorPageProps) {
       <Header />
 
       <main className="max-w-6xl mx-auto px-4 py-8">
-        {isPreviewProfile && (
-          <div className="mb-6 rounded-lg bg-blue-50 p-4 text-sm text-blue-900">
-            Showing demo professor data. Update the URL to a real professor ID
-            to see live mock data, or use /professor/
-            {PREVIEW_PROFESSOR_ID}.
-          </div>
-        )}
-
         {/* Professor Header */}
         <div className="grid md:grid-cols-3 gap-8 mb-12">
           <div>
@@ -82,12 +83,11 @@ export default async function ProfessorPage({ params }: ProfessorPageProps) {
               <div>
                 <h1 className="text-3xl font-bold">{professor.name}</h1>
                 <p className="text-gray-600">{professor.department}</p>
-                <Link
-                  href={`/school/${professor.schoolId}`}
-                  className="text-blue-600 underline text-sm"
-                >
-                  {professor.schoolName}
-                </Link>
+                {professor.schoolName ? (
+                  <span className="text-blue-600 text-sm">
+                    {professor.schoolName}
+                  </span>
+                ) : null}
               </div>
             </div>
 
@@ -105,13 +105,17 @@ export default async function ProfessorPage({ params }: ProfessorPageProps) {
             <div className="space-y-4 mb-8">
               <div>
                 <div className="text-3xl font-bold">
-                  {(professor.wouldTakeAgain * 100).toFixed(0)}%
+                  {professor.wouldTakeAgain != null
+                    ? `${professor.wouldTakeAgain.toFixed(0)}%`
+                    : "N/A"}
                 </div>
                 <p className="text-sm text-gray-600">Would take again</p>
               </div>
               <div>
                 <div className="text-3xl font-bold">
-                  {professor.difficultyLevel.toFixed(1)}
+                  {professor.difficultyLevel != null
+                    ? professor.difficultyLevel.toFixed(1)
+                    : "N/A"}
                 </div>
                 <p className="text-sm text-gray-600">Level of Difficulty</p>
               </div>
@@ -183,8 +187,13 @@ export default async function ProfessorPage({ params }: ProfessorPageProps) {
         {/* Reviews */}
         <div>
           <h2 className="text-2xl font-bold mb-6">Reviews</h2>
+          {reviewsError ? (
+            <div className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+              {reviewsError}
+            </div>
+          ) : null}
           <div className="space-y-4">
-            {professorReviews.map((review, idx) => (
+            {professorReviews.map((review) => (
               <ReviewCard key={review.id} review={review} />
             ))}
           </div>

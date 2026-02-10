@@ -1,4 +1,4 @@
-import { School } from "@/lib/mockData";
+import type { School } from "@/lib/types";
 
 interface SchoolRatingsGridProps {
   school: School;

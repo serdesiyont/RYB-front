@@ -23,7 +23,9 @@ const lecturerSchema = z.object({
   name: z.string().trim().min(2, "Name is required"),
   university: z.string().trim().min(2, "University is required"),
   department: z.string().trim().min(2, "Department is required"),
-  courses: z.array(z.string().trim().min(1, "Course name cannot be empty")).min(1, "Add at least one course"),
+  courses: z
+    .array(z.string().trim().min(1, "Course name cannot be empty"))
+    .min(1, "Add at least one course"),
 });
 
 export type LecturerFormValues = z.infer<typeof lecturerSchema>;
@@ -70,11 +72,11 @@ export function LecturerForm() {
     setStatus(null);
     try {
       const res = await createLecturer(values);
-      setStatus(res.message || "Lecturer created successfully");
+      setStatus(res.message || "Lecturer added successfully");
       form.reset({ name: "", university: "", department: "", courses: [] });
       router.refresh();
     } catch (err: any) {
-      setStatus(err?.message || "Failed to create lecturer. Please try again.");
+      setStatus(err?.message || "Failed to add lecturer. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -133,7 +135,9 @@ export function LecturerForm() {
           render={() => (
             <FormItem>
               <FormLabel>Courses</FormLabel>
-              <FormDescription>Add at least one course taught by this lecturer.</FormDescription>
+              <FormDescription>
+                Add at least one course taught by this lecturer.
+              </FormDescription>
               <div className="flex gap-2">
                 <Input
                   value={courseInput}
@@ -175,18 +179,24 @@ export function LecturerForm() {
         />
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
+          <Button
+            type="submit"
+            disabled={submitting}
+            className="w-full sm:w-auto"
+          >
             {submitting ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
                 <span className="ml-2">Creating...</span>
               </>
             ) : (
-              "Create lecturer"
+              "Add lecturer"
             )}
           </Button>
           {status ? (
-            <p className="text-sm text-muted-foreground sm:text-right">{status}</p>
+            <p className="text-sm text-muted-foreground sm:text-right">
+              {status}
+            </p>
           ) : null}
         </div>
       </form>

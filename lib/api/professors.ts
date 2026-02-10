@@ -1,114 +1,83 @@
 import { apiFetch, ApiError } from "./client";
-import { professors as mockProfessors, reviews as mockReviews } from "../mockData";
 import type { Professor, Review } from "../types";
 
 interface FetchOptions {
   signal?: AbortSignal;
-  useMockOnError?: boolean;
-  allowFallbackToRate?: boolean;
 }
 
-export async function fetchProfessors(options: FetchOptions = {}): Promise<Professor[]> {
-  try {
-    return await apiFetch<Professor[]>("/api/professors", { signal: options.signal });
-  } catch (error) {
-    if (options.useMockOnError) {
-      return mockProfessors;
-    }
-    throw error;
-  }
+interface LecturerResponse {
+  _id: string;
+  name: string;
+  university: string;
+  department: string;
+  courses: string[];
+  rating: number;
+  count: number;
+  createdAt: string;
+  updatedAt: string;
+  wouldTakeAgain?: number;
+  difficulty?: number;
 }
 
-export async function fetchProfessorById(id: number, options: FetchOptions = {}): Promise<Professor> {
-  try {
-    return await apiFetch<Professor>(`/api/professors/${id}`, { signal: options.signal });
-  } catch (error) {
-    const shouldFallback = options.allowFallbackToRate !== false;
-    if (shouldFallback) {
-      const fallbackFromRate = await fetchProfessorFromRateEndpoint(id, options);
-      if (fallbackFromRate) return fallbackFromRate;
-    }
-
-    if (options.useMockOnError) {
-      const fallback = mockProfessors.find((p) => p.id === id);
-      if (fallback) return fallback;
-    }
-    throw error;
-  }
+interface LecturerRatingResponse {
+  _id: string;
+  lecturerId: string;
+  userId: string;
+  course: string;
+  difficulty: number;
+  quality: number;
+  creditHr: number;
+  grade: string;
+  textbook: boolean;
+  comment?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export async function fetchProfessorReviews(id: number, options: FetchOptions = {}): Promise<Review[]> {
-  try {
-    return await apiFetch<Review[]>(`/api/professors/${id}/reviews`, { signal: options.signal });
-  } catch (error) {
-    const shouldFallback = options.allowFallbackToRate !== false;
-    if (shouldFallback) {
-      const fallbackFromRate = await fetchProfessorReviewsFromRateEndpoint(id, options);
-      if (fallbackFromRate) return fallbackFromRate;
-    }
+export async function fetchProfessors(
+  options: FetchOptions = {}
+): Promise<Professor[]> {
+  const res = await apiFetch<{ data: LecturerResponse[] }>("/lecturer", {
+    signal: options.signal,
+    credentials: "include",
+  });
 
-    if (options.useMockOnError) {
-      return mockReviews.filter((r) => r.professorId === id);
-    }
-    throw error;
+  return res.data.map(mapLecturerToProfessor);
+}
+
+export async function fetchProfessorById(
+  id: string,
+  options: FetchOptions = {}
+): Promise<Professor> {
+  const res = await apiFetch<{ data: LecturerResponse }>(`/lecturer/${id}`, {
+    signal: options.signal,
+    credentials: "include",
+  });
+  return mapLecturerToProfessor(res.data);
+}
+
+export async function fetchProfessorReviews(
+  id: string,
+  options: FetchOptions = {}
+): Promise<Review[]> {
+  const res = await apiFetch<{ data: LecturerRatingResponse[] }>(
+    `/lecturer-ratings/lecturer/${id}`,
+    { signal: options.signal, credentials: "include" }
+  );
+
+  // Backend might return data directly in array or wrapped in { data: [] }
+  const ratings = res.data ?? (res as unknown as LecturerRatingResponse[]);
+
+  if (!Array.isArray(ratings)) {
+    console.error("Unexpected response format:", res);
+    return [];
   }
+
+  return ratings.map(mapLecturerRatingToReview);
 }
 
 export function isNotFound(error: unknown) {
   return error instanceof ApiError && error.status === 404;
-}
-
-async function fetchProfessorFromRateEndpoint(
-  id: number,
-  options: FetchOptions,
-): Promise<Professor | null> {
-  try {
-    const data = await apiFetch<RateProfessorResponse>(`/api/rate/professor/${id}`, {
-      signal: options.signal,
-    });
-
-    return {
-      id: data.id,
-      name: data.name,
-      department: data.department,
-      schoolId: data.schoolId,
-      schoolName: data.schoolName,
-      averageRating: data.averageRating,
-      totalRatings: data.totalRatings,
-      wouldTakeAgain: data.wouldTakeAgain,
-      difficultyLevel: data.difficultyLevel,
-    };
-  } catch (err) {
-    return null;
-  }
-}
-
-async function fetchProfessorReviewsFromRateEndpoint(
-  id: number,
-  options: FetchOptions,
-): Promise<Review[] | null> {
-  try {
-    const data = await apiFetch<RateProfessorResponse>(`/api/rate/professor/${id}`, {
-      signal: options.signal,
-    });
-    return data.sampleReviews ?? null;
-  } catch (err) {
-    return null;
-  }
-}
-
-interface RateProfessorResponse {
-  type: "professor";
-  id: number;
-  name: string;
-  department: string;
-  schoolId: number;
-  schoolName: string;
-  averageRating: number;
-  totalRatings: number;
-  wouldTakeAgain: number;
-  difficultyLevel: number;
-  sampleReviews?: Review[];
 }
 
 export interface SubmitProfessorRatingBody {
@@ -126,20 +95,62 @@ export interface SubmitProfessorRatingBody {
 }
 
 export async function submitProfessorRating(
-  id: number,
+  id: string,
   body: SubmitProfessorRatingBody,
-  options: FetchOptions = {},
+  options: FetchOptions = {}
 ) {
-  return apiFetch<{ message: string; reviewId?: number }>(
-    `/api/professors/${id}/reviews`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ ...body, professorId: id }),
-      signal: options.signal,
-      credentials: "include",
+  const payload = {
+    lecturerId: id,
+    course: body.course,
+    difficulty: body.difficulty,
+    quality: body.rating,
+    creditHr: Number(body.forCredit === "yes" ? 3 : 0),
+    grade: body.grade,
+    textbook: body.textbook === "yes",
+    comment: body.review,
+  };
+
+  return apiFetch<{ message: string; reviewId?: string }>(`/lecturer-ratings`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify(payload),
+    signal: options.signal,
+    credentials: "include",
+  });
+}
+
+function mapLecturerToProfessor(lecturer: LecturerResponse): Professor {
+  return {
+    id: lecturer._id,
+    name: lecturer.name,
+    department: lecturer.department,
+    schoolId: null,
+    schoolName: lecturer.university,
+    averageRating: lecturer.rating ?? 0,
+    totalRatings: lecturer.count ?? 0,
+    wouldTakeAgain:
+      typeof lecturer.wouldTakeAgain === "number"
+        ? lecturer.wouldTakeAgain
+        : null,
+    difficultyLevel:
+      typeof lecturer.difficulty === "number" ? lecturer.difficulty : null,
+  };
+}
+
+function mapLecturerRatingToReview(rating: LecturerRatingResponse): Review {
+  return {
+    id: rating._id,
+    professorId: rating.lecturerId,
+    authorId: rating.userId,
+    rating: rating.quality,
+    difficulty: rating.difficulty,
+    course: rating.course,
+    text: rating.comment ?? "",
+    date: rating.createdAt,
+    helpfulCount: 0,
+    notHelpfulCount: 0,
+    tags: [],
+  };
 }

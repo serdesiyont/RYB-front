@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { schools, professors } from "@/lib/mockData";
 import Header from "@/components/Header";
+import { fetchProfessors } from "@/lib/api/professors";
+import { fetchSchools } from "@/lib/api/schools";
 
 const ratingColor = (value: number) => {
   if (value < 1) return "bg-red-600 text-white";
@@ -17,6 +18,44 @@ export default function BrowsePage() {
   const [activeTab, setActiveTab] = useState<"professors" | "schools">(
     "professors"
   );
+  const [professors, setProfessors] = useState<
+    Awaited<ReturnType<typeof fetchProfessors>>
+  >([]);
+  const [schools, setSchools] = useState<
+    Awaited<ReturnType<typeof fetchSchools>>
+  >([]);
+  const [professorsError, setProfessorsError] = useState<string | null>(null);
+  const [schoolsError, setSchoolsError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      try {
+        const [profList, schoolList] = await Promise.all([
+          fetchProfessors(),
+          fetchSchools(),
+        ]);
+
+        if (!active) return;
+        setProfessors(profList);
+        setSchools(schoolList);
+      } catch (err) {
+        if (!active) return;
+        const message =
+          err instanceof Error ? err.message : "Unable to load data.";
+        setProfessorsError(message);
+        setSchoolsError(message);
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -49,6 +88,18 @@ export default function BrowsePage() {
           </button>
         </div>
 
+        {loading && <div className="text-sm text-gray-600">Loading data…</div>}
+        {professorsError && activeTab === "professors" && (
+          <div className="mb-4 rounded-md bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            {professorsError}
+          </div>
+        )}
+        {schoolsError && activeTab === "schools" && (
+          <div className="mb-4 rounded-md bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            {schoolsError}
+          </div>
+        )}
+
         {/* Professors Grid */}
         {activeTab === "professors" && (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -77,7 +128,7 @@ export default function BrowsePage() {
                 <div className="flex justify-between text-xs text-gray-500">
                   <span>{prof.totalRatings} ratings</span>
                   <span>
-                    {(prof.wouldTakeAgain * 100).toFixed(0)}% would take again
+                    {prof.wouldTakeAgain.toFixed(0)}% would take again
                   </span>
                 </div>
               </Link>

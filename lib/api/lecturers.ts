@@ -3,7 +3,6 @@ import type { Lecturer } from "../types";
 
 interface FetchOptions {
   signal?: AbortSignal;
-  useMockOnError?: boolean;
 }
 
 interface CreateLecturerBody {
@@ -18,7 +17,10 @@ interface CreateLecturerResponse {
   data: Lecturer;
 }
 
-export async function createLecturer(body: CreateLecturerBody, options: FetchOptions = {}) {
+export async function createLecturer(
+  body: CreateLecturerBody,
+  options: FetchOptions = {}
+) {
   return apiFetch<CreateLecturerResponse>("/lecturer", {
     method: "POST",
     credentials: "include",
@@ -30,32 +32,23 @@ export async function createLecturer(body: CreateLecturerBody, options: FetchOpt
   });
 }
 
-export async function fetchLecturers(options: FetchOptions = {}): Promise<Lecturer[]> {
-  try {
-    const res = await apiFetch<{ data: Lecturer[] }>("/lecturer", {
-      signal: options.signal,
-      credentials: "include",
-    });
-    return res.data;
-  } catch (error) {
-    if (options.useMockOnError) {
-      return [];
-    }
-    throw error;
-  }
+export async function fetchLecturers(
+  options: FetchOptions = {}
+): Promise<Lecturer[]> {
+  const res = await apiFetch<{ data: Lecturer[] }>("/lecturer", {
+    signal: options.signal,
+    credentials: "include",
+  });
+  return res.data;
 }
 
-export async function fetchLecturerById(id: string, options: FetchOptions = {}): Promise<Lecturer | null> {
-  try {
-    const res = await apiFetch<{ data: Lecturer }>(`/lecturer/${id}`, {
-      signal: options.signal,
-      credentials: "include",
-    });
-    return res.data;
-  } catch (error) {
-    if (options.useMockOnError) {
-      return null;
-    }
-    throw error;
-  }
+export async function fetchLecturerById(
+  id: string,
+  options: FetchOptions = {}
+): Promise<Lecturer | null> {
+  const res = await apiFetch<{ data: Lecturer }>(`/lecturer/${id}`, {
+    signal: options.signal,
+    credentials: "include",
+  });
+  return res.data;
 }

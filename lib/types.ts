@@ -12,7 +12,7 @@ export interface SchoolRatings {
 }
 
 export interface School {
-  id: number;
+  id: string | number;
   name: string;
   location: string;
   ratings: SchoolRatings;
@@ -21,15 +21,15 @@ export interface School {
 }
 
 export interface Professor {
-  id: number;
+  id: string | number;
   name: string;
   department: string;
-  schoolId: number;
-  schoolName: string;
+  schoolId?: string | number | null;
+  schoolName?: string;
   averageRating: number;
   totalRatings: number;
-  wouldTakeAgain: number;
-  difficultyLevel: number;
+  wouldTakeAgain?: number | null;
+  difficultyLevel?: number | null;
 }
 
 export interface Lecturer {
@@ -45,9 +45,9 @@ export interface Lecturer {
 }
 
 export interface Review {
-  id: number;
-  professorId?: number;
-  schoolId?: number;
+  id: string | number;
+  professorId?: string | number;
+  schoolId?: string | number;
   authorId: string;
   rating: number;
   quality?: number;

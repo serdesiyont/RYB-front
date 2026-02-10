@@ -23,7 +23,10 @@ function buildUrl(path: string) {
   return `${base}${normalized}`;
 }
 
-export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function apiFetch<T>(
+  path: string,
+  init: RequestInit = {}
+): Promise<T> {
   const url = buildUrl(path);
   const response = await fetch(url, {
     ...init,

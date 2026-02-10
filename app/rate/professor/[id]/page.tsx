@@ -96,16 +96,11 @@ export default function ProfessorRatingDetail({
     let active = true;
     async function load() {
       try {
-        const professor = await fetchProfessorById(
-          parseInt(resolvedParams.id, 10),
-          { allowFallbackToRate: false }
-        );
+        const professor = await fetchProfessorById(resolvedParams.id);
         if (!active) return;
         setSelectedProf(professor);
 
-        const profReviews = await fetchProfessorReviews(professor.id, {
-          allowFallbackToRate: false,
-        });
+        const profReviews = await fetchProfessorReviews(professor.id);
         if (!active) return;
         setFetchedReviews(profReviews);
       } catch (err) {

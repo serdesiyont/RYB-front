@@ -8,7 +8,6 @@ import {
   fetchSchoolReviews,
   isNotFound as isSchoolNotFound,
 } from "@/lib/api/schools";
-import { fetchProfessors } from "@/lib/api/professors";
 
 interface SchoolPageProps {
   params: Promise<{ id: string }>;
@@ -16,19 +15,34 @@ interface SchoolPageProps {
 
 export default async function SchoolPage({ params }: SchoolPageProps) {
   const { id } = await params;
-  const numericId = Number(id);
+  const schoolId = id;
 
-  const school = await resolveSchool(numericId);
-  if (!school) {
-    return <div className="p-4">School not found</div>;
+  if (!schoolId) {
+    return <div className="p-4">Invalid school id</div>;
   }
 
-  const [schoolProfessors, schoolReviews] = await Promise.all([
-    fetchProfessors({ useMockOnError: true }).then((list) =>
-      list.filter((p) => p.schoolId === school.id)
-    ),
-    fetchSchoolReviews(school.id, { useMockOnError: true }),
-  ]);
+  let school: Awaited<ReturnType<typeof fetchSchoolById>>;
+  try {
+    school = await fetchSchoolById(schoolId);
+  } catch (error) {
+    if (isSchoolNotFound(error)) {
+      return <div className="p-4">School not found</div>;
+    }
+    return (
+      <div className="p-4">
+        Unable to load school details right now. Please try again later.
+      </div>
+    );
+  }
+
+  let schoolReviews: Awaited<ReturnType<typeof fetchSchoolReviews>> = [];
+  let reviewsError: string | null = null;
+
+  try {
+    schoolReviews = await fetchSchoolReviews(school.id);
+  } catch (error) {
+    reviewsError = "Unable to load school reviews right now.";
+  }
 
   const tagCounts: Record<string, number> = {};
   schoolReviews.forEach((review) => {
@@ -90,6 +104,11 @@ export default async function SchoolPage({ params }: SchoolPageProps) {
           <h2 className="text-2xl font-bold mb-6">
             {schoolReviews.length} Ratings
           </h2>
+          {reviewsError ? (
+            <div className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-900">
+              {reviewsError}
+            </div>
+          ) : null}
           <div className="space-y-4">
             {schoolReviews.map((review) => (
               <ReviewCard
@@ -110,13 +129,4 @@ export default async function SchoolPage({ params }: SchoolPageProps) {
       </main>
     </div>
   );
-}
-
-async function resolveSchool(id: number) {
-  try {
-    return await fetchSchoolById(id, { useMockOnError: true });
-  } catch (error) {
-    if (isSchoolNotFound(error)) return null;
-    throw error;
-  }
 }
