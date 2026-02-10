@@ -35,8 +35,6 @@ const TAGS = [
   "Online Savvy",
 ];
 
-const COURSES = ["GSD600", "GSD601", "GSD602", "CS50", "MATH101", "ENG201"];
-
 const ratingColor = (value: number) => {
   if (value <= 1) return "#dc2626";
   if (value <= 2) return "#f2994a";
@@ -82,12 +80,8 @@ export default function ProfessorRatingDetail({
   const [difficulty, setDifficulty] = useState(0);
   const [retake, setRetake] = useState<"yes" | "no" | null>(null);
   const [courseCode, setCourseCode] = useState("");
-  const [isOnlineCourse, setIsOnlineCourse] = useState(false);
   const [textbook, setTextbook] = useState<"yes" | "no" | null>(null);
-  const [attendance, setAttendance] = useState<"mandatory" | "optional" | null>(
-    null
-  );
-  const [credit, setCredit] = useState<"yes" | "no" | null>(null);
+  const [creditHr, setCreditHr] = useState(0);
   const [grade, setGrade] = useState("");
   const [review, setReview] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -143,8 +137,7 @@ export default function ProfessorRatingDetail({
     setRetake(readChoice("retake", ["yes", "no"]));
     setCourseCode(searchParams.get("course") || "");
     setTextbook(readChoice("textbook", ["yes", "no"]));
-    setAttendance(readChoice("attendance", ["mandatory", "optional"]));
-    setCredit(readChoice("credit", ["yes", "no"]));
+    setCreditHr(readNumber("creditHr"));
     setGrade(searchParams.get("grade") || "");
     setReview(searchParams.get("review") || "");
 
@@ -156,11 +149,12 @@ export default function ProfessorRatingDetail({
   }, [searchParams]);
 
   const courseSuggestions = useMemo(() => {
-    if (!courseCode) return COURSES.slice(0, 5);
-    return COURSES.filter((c) =>
-      c.toLowerCase().includes(courseCode.toLowerCase())
-    ).slice(0, 5);
-  }, [courseCode]);
+    const availableCourses = selectedProf?.courses ?? [];
+    if (!courseCode) return availableCourses.slice(0, 5);
+    return availableCourses
+      .filter((c) => c.toLowerCase().includes(courseCode.toLowerCase()))
+      .slice(0, 5);
+  }, [courseCode, selectedProf]);
 
   const handleSubmit = async () => {
     const missing: string[] = [];
@@ -169,10 +163,8 @@ export default function ProfessorRatingDetail({
     if (!retake) missing.push("retake");
     if (!courseCode.trim()) missing.push("course");
     if (!textbook) missing.push("textbook");
-    if (!attendance) missing.push("attendance");
-    if (!credit) missing.push("credit");
+    if (creditHr < 1) missing.push("credit hours");
     if (!grade) missing.push("grade");
-    if (!review.trim()) missing.push("review");
 
     if (missing.length > 0) {
       setError(
@@ -196,12 +188,10 @@ export default function ProfessorRatingDetail({
         difficulty,
         wouldTakeAgain: retake === "yes",
         course: courseCode,
-        isOnlineCourse,
+        creditHr,
         textbook,
-        attendance,
-        forCredit: credit,
         grade,
-        review,
+        comment: review.trim() ? review : undefined,
         tags: selectedTags,
       });
 
@@ -246,12 +236,16 @@ export default function ProfessorRatingDetail({
           <p className="mb-3 text-lg text-gray-600">Add Rating</p>
           <p className="text-sm">
             <span className="font-semibold">{selectedProf.department}</span> •
-            <Link
-              href={`/school/${selectedProf.schoolId}`}
-              className="ml-1 text-blue-600 hover:underline"
-            >
-              {selectedSchoolName}
-            </Link>
+            {selectedProf.schoolId ? (
+              <Link
+                href={`/school/${selectedProf.schoolId}`}
+                className="ml-1 text-blue-600 hover:underline"
+              >
+                {selectedSchoolName}
+              </Link>
+            ) : (
+              <span className="ml-1 text-blue-600">{selectedSchoolName}</span>
+            )}
           </p>
 
           {loadError ? (
@@ -382,6 +376,32 @@ export default function ProfessorRatingDetail({
           </div>
         </div>
 
+        {/* Credit hours */}
+        <div className="mb-6 rounded-lg bg-white p-6">
+          <h2 className="mb-4 font-semibold">
+            Credit hours <span className="text-red-500">*</span>
+          </h2>
+          <div className="mb-4 flex justify-center gap-2">
+            {[1, 2, 3, 4, 5].map((value) => (
+              <button
+                key={value}
+                onClick={() => setCreditHr(value)}
+                style={{
+                  backgroundColor:
+                    value <= creditHr && creditHr > 0
+                      ? ratingColor(creditHr)
+                      : "#e5e7eb",
+                }}
+                className="h-12 w-12 rounded-lg transition"
+              />
+            ))}
+          </div>
+          <div className="flex justify-between text-sm text-gray-600">
+            <span>1 - Low</span>
+            <span>5 - High</span>
+          </div>
+        </div>
+
         {/* Would you take again */}
         <div className="mb-6 rounded-lg bg-white p-6">
           <h2 className="mb-4 font-semibold">
@@ -412,35 +432,6 @@ export default function ProfessorRatingDetail({
           </div>
         </div>
 
-        {/* Was this class taken for credit */}
-        <div className="mb-6 rounded-lg bg-white p-6">
-          <h2 className="mb-4 font-semibold">
-            Was this class taken for credit?
-          </h2>
-          <div className="flex justify-center gap-6">
-            <button
-              onClick={() => setCredit("yes")}
-              className={`h-16 w-16 rounded-full border-4 transition ${
-                credit === "yes"
-                  ? "border-green-600 bg-green-100"
-                  : "border-gray-300 hover-border-gray-400"
-              }`}
-            />
-            <button
-              onClick={() => setCredit("no")}
-              className={`h-16 w-16 rounded-full border-4 transition ${
-                credit === "no"
-                  ? "border-red-600 bg-red-100"
-                  : "border-gray-300 hover:border-gray-400"
-              }`}
-            />
-          </div>
-          <div className="mt-2 flex justify-center gap-32 text-sm">
-            <span>Yes</span>
-            <span>No</span>
-          </div>
-        </div>
-
         {/* Did this professor use textbooks */}
         <div className="mb-6 rounded-lg bg-white p-6">
           <h2 className="mb-4 font-semibold">
@@ -459,33 +450,6 @@ export default function ProfessorRatingDetail({
               onClick={() => setTextbook("no")}
               className={`h-16 w-16 rounded-full border-4 transition ${
                 textbook === "no"
-                  ? "border-red-600 bg-red-100"
-                  : "border-gray-300 hover:border-gray-400"
-              }`}
-            />
-          </div>
-          <div className="mt-2 flex justify-center gap-32 text-sm">
-            <span>Yes</span>
-            <span>No</span>
-          </div>
-        </div>
-
-        {/* Was attendance mandatory */}
-        <div className="mb-6 rounded-lg bg-white p-6">
-          <h2 className="mb-4 font-semibold">Was attendance mandatory?</h2>
-          <div className="flex justify-center gap-6">
-            <button
-              onClick={() => setAttendance("mandatory")}
-              className={`h-16 w-16 rounded-full border-4 transition ${
-                attendance === "mandatory"
-                  ? "border-green-600 bg-green-100"
-                  : "border-gray-300 hover:border-gray-400"
-              }`}
-            />
-            <button
-              onClick={() => setAttendance("optional")}
-              className={`h-16 w-16 rounded-full border-4 transition ${
-                attendance === "optional"
                   ? "border-red-600 bg-red-100"
                   : "border-gray-300 hover:border-gray-400"
               }`}
@@ -562,6 +526,7 @@ export default function ProfessorRatingDetail({
             onChange={(e) => setReview(e.target.value)}
             maxLength={350}
             rows={8}
+            required
             className="w-full resize-none rounded border border-blue-300 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
           <div className="mt-1 text-right text-sm text-gray-600">

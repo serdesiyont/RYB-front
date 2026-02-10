@@ -95,6 +95,100 @@
         }
       ]
     },
+    "search": {
+      "basePath": "/search",
+      "endpoints": [
+        {
+          "path": "/search",
+          "method": "GET",
+          "description": "Fast efficient search for lecturers and campuses using MongoDB Atlas Search",
+          "authentication": false,
+          "queryParams": {
+            "lecturerName": "string (optional)",
+            "campusName": "string (optional)"
+          },
+          "searchBehavior": [
+            "If only lecturerName is provided: searches for lecturers across all universities",
+            "If only campusName is provided: searches for campuses/universities",
+            "If both lecturerName and campusName are provided: searches for lecturers at the specified campus",
+            "At least one parameter must be provided"
+          ],
+          "response": {
+            "200": {
+              "description": "Search results with relevance scoring",
+              "campusSearchExample": {
+                "type": "campus",
+                "query": "Addis Ababa",
+                "results": [
+                  {
+                    "_id": "string",
+                    "name": "string",
+                    "address": "string",
+                    "description": "string",
+                    "overallRating": "number",
+                    "count": "number",
+                    "score": "number (search relevance score)"
+                  }
+                ],
+                "count": "number"
+              },
+              "lecturerSearchExample": {
+                "type": "lecturer",
+                "query": "John",
+                "results": [
+                  {
+                    "_id": "string",
+                    "name": "string",
+                    "university": "string",
+                    "department": "string",
+                    "courses": ["string"],
+                    "rating": "number",
+                    "count": "number",
+                    "difficulty": "number",
+                    "wouldTakeAgain": "number",
+                    "score": "number (search relevance score)"
+                  }
+                ],
+                "count": "number"
+              },
+              "narrowedSearchExample": {
+                "type": "lecturer",
+                "query": {
+                  "lecturerName": "John",
+                  "campusName": "Addis Ababa University"
+                },
+                "results": [
+                  {
+                    "_id": "string",
+                    "name": "string",
+                    "university": "string",
+                    "department": "string",
+                    "courses": ["string"],
+                    "rating": "number",
+                    "count": "number",
+                    "difficulty": "number",
+                    "wouldTakeAgain": "number",
+                    "score": "number (search relevance score)"
+                  }
+                ],
+                "count": "number"
+              }
+            },
+            "400": {
+              "message": "At least one search parameter (lecturerName or campusName) is required"
+            }
+          },
+          "features": [
+            "Uses MongoDB Atlas Search for fast full-text search",
+            "Fuzzy matching with up to 2 character edits for typo tolerance",
+            "Falls back to regex search if Atlas Search is not configured",
+            "Returns top 20 most relevant results",
+            "Includes search relevance score",
+            "Searches across multiple fields: name, department, courses, description"
+          ]
+        }
+      ]
+    },
     "campus": {
       "basePath": "/campus",
       "endpoints": [
@@ -702,7 +796,8 @@
             "creditHr": "number (required, 1-5)",
             "grade": "string (required)",
             "textbook": "boolean (required)",
-            "comment": "string (optional)"
+            "comment": "string (optional)",
+            "tags": "array of strings (optional, keywords/tags for the rating)"
           },
           "response": {
             "201": {
@@ -718,6 +813,7 @@
                 "grade": "string",
                 "textbook": "boolean",
                 "comment": "string",
+                "tags": ["string"],
                 "createdAt": "string (ISO date)",
                 "updatedAt": "string (ISO date)"
               }
@@ -751,6 +847,7 @@
                   "grade": "string",
                   "textbook": "boolean",
                   "comment": "string",
+                  "tags": ["string"],
                   "createdAt": "string (ISO date)",
                   "updatedAt": "string (ISO date)"
                 }
@@ -781,6 +878,7 @@
                 "grade": "string",
                 "textbook": "boolean",
                 "comment": "string",
+                "tags": ["string"],
                 "createdAt": "string (ISO date)",
                 "updatedAt": "string (ISO date)"
               }
@@ -814,6 +912,7 @@
                   "grade": "string",
                   "textbook": "boolean",
                   "comment": "string",
+                  "tags": ["string"],
                   "createdAt": "string (ISO date)",
                   "updatedAt": "string (ISO date)"
                 }
@@ -845,6 +944,7 @@
                   "grade": "string",
                   "textbook": "boolean",
                   "comment": "string",
+                  "tags": ["string"],
                   "createdAt": "string (ISO date)",
                   "updatedAt": "string (ISO date)"
                 }
@@ -868,7 +968,8 @@
             "creditHr": "number (optional, 1-5)",
             "grade": "string (optional)",
             "textbook": "boolean (optional)",
-            "comment": "string (optional)"
+            "comment": "string (optional)",
+            "tags": "array of strings (optional)"
           },
           "response": {
             "200": {
@@ -885,6 +986,7 @@
                 "grade": "string",
                 "textbook": "boolean",
                 "comment": "string",
+                "tags": ["string"],
                 "createdAt": "string (ISO date)",
                 "updatedAt": "string (ISO date)"
               }

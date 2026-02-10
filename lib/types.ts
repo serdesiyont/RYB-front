@@ -26,6 +26,7 @@ export interface Professor {
   department: string;
   schoolId?: string | number | null;
   schoolName?: string;
+  courses?: string[];
   averageRating: number;
   totalRatings: number;
   wouldTakeAgain?: number | null;

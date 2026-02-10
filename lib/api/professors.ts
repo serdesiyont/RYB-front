@@ -25,11 +25,13 @@ interface LecturerRatingResponse {
   userId: string;
   course: string;
   difficulty: number;
+  wouldTakeAgain?: boolean;
   quality: number;
   creditHr: number;
   grade: string;
   textbook: boolean;
   comment?: string;
+  tags?: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -85,12 +87,10 @@ export interface SubmitProfessorRatingBody {
   difficulty: number;
   wouldTakeAgain: boolean;
   course: string;
-  isOnlineCourse: boolean;
+  creditHr: number;
   textbook: "yes" | "no" | null;
-  attendance: "mandatory" | "optional" | null;
-  forCredit: "yes" | "no" | null;
   grade: string;
-  review: string;
+  comment?: string;
   tags: string[];
 }
 
@@ -103,11 +103,13 @@ export async function submitProfessorRating(
     lecturerId: id,
     course: body.course,
     difficulty: body.difficulty,
+    wouldTakeAgain: body.wouldTakeAgain,
     quality: body.rating,
-    creditHr: Number(body.forCredit === "yes" ? 3 : 0),
+    creditHr: body.creditHr,
     grade: body.grade,
     textbook: body.textbook === "yes",
-    comment: body.review,
+    comment: body.comment,
+    tags: body.tags,
   };
 
   return apiFetch<{ message: string; reviewId?: string }>(`/lecturer-ratings`, {
@@ -128,6 +130,7 @@ function mapLecturerToProfessor(lecturer: LecturerResponse): Professor {
     department: lecturer.department,
     schoolId: null,
     schoolName: lecturer.university,
+    courses: lecturer.courses,
     averageRating: lecturer.rating ?? 0,
     totalRatings: lecturer.count ?? 0,
     wouldTakeAgain:
@@ -151,6 +154,6 @@ function mapLecturerRatingToReview(rating: LecturerRatingResponse): Review {
     date: rating.createdAt,
     helpfulCount: 0,
     notHelpfulCount: 0,
-    tags: [],
+    tags: rating.tags ?? [],
   };
 }
