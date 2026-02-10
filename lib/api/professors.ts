@@ -123,6 +123,25 @@ export async function submitProfessorRating(
   });
 }
 
+export async function addCourseToProfessor(
+  id: string,
+  courseName: string,
+  options: FetchOptions = {}
+) {
+  return apiFetch<{ message: string; data: { _id: string; courses: string[] } }>(
+    `/lecturer/${id}/courses`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name: courseName }),
+      signal: options.signal,
+      credentials: "include",
+    }
+  );
+}
+
 function mapLecturerToProfessor(lecturer: LecturerResponse): Professor {
   return {
     id: lecturer._id,

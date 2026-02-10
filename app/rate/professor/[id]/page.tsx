@@ -8,6 +8,7 @@ import Header from "@/components/Header";
 import {
   fetchProfessorById,
   fetchProfessorReviews,
+  addCourseToProfessor,
   submitProfessorRating,
 } from "@/lib/api/professors";
 import type { Professor, Review } from "@/lib/types";
@@ -157,11 +158,13 @@ export default function ProfessorRatingDetail({
   }, [courseCode, selectedProf]);
 
   const handleSubmit = async () => {
+    const courseValue = courseCode.trim();
+
     const missing: string[] = [];
     if (rating < 1) missing.push("rating");
     if (difficulty < 1) missing.push("difficulty");
     if (!retake) missing.push("retake");
-    if (!courseCode.trim()) missing.push("course");
+    if (!courseValue) missing.push("course");
     if (!textbook) missing.push("textbook");
     if (creditHr < 1) missing.push("credit hours");
     if (!grade) missing.push("grade");
@@ -182,12 +185,17 @@ export default function ProfessorRatingDetail({
     setSubmitMessage(null);
     setSubmitting(true);
 
+    const shouldAddCourse = !(selectedProf.courses ?? []).some(
+      (c) => c.toLowerCase() === courseValue.toLowerCase()
+    );
+    let courseAdded = false;
+
     try {
       await submitProfessorRating(selectedProf.id, {
         rating,
         difficulty,
         wouldTakeAgain: retake === "yes",
-        course: courseCode,
+        course: courseValue,
         creditHr,
         textbook,
         grade,
@@ -195,7 +203,33 @@ export default function ProfessorRatingDetail({
         tags: selectedTags,
       });
 
-      setSubmitMessage("Thanks for your rating! It has been submitted.");
+      if (shouldAddCourse) {
+        try {
+          await addCourseToProfessor(selectedProf.id, courseValue);
+          courseAdded = true;
+        } catch (courseErr) {
+          console.error("Failed to add course to lecturer", courseErr);
+        }
+      }
+
+      setSelectedProf((prev) => {
+        if (!prev) return prev;
+        const existing = prev.courses ?? [];
+        const exists = existing.some(
+          (c) => c.toLowerCase() === courseValue.toLowerCase()
+        );
+        if (exists) return prev;
+        if (courseAdded) {
+          return { ...prev, courses: [...existing, courseValue] };
+        }
+        return prev;
+      });
+
+      setSubmitMessage(
+        courseAdded || !shouldAddCourse
+          ? "Thanks for your rating! It has been submitted."
+          : "Rating submitted. Adding the course failed—please try again later."
+      );
     } catch (err) {
       setError(
         err instanceof Error

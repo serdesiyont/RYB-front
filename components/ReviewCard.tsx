@@ -8,7 +8,10 @@ interface ReviewCardProps {
   isSchoolReview?: boolean;
 }
 
-export default function ReviewCard({ review, isSchoolReview }: ReviewCardProps) {
+export default function ReviewCard({
+  review,
+  isSchoolReview,
+}: ReviewCardProps) {
   const [helpful, setHelpful] = useState(review.helpfulCount);
   const [notHelpful, setNotHelpful] = useState(review.notHelpfulCount);
   const [helpfulClicked, setHelpfulClicked] = useState(false);
@@ -110,12 +113,14 @@ export default function ReviewCard({ review, isSchoolReview }: ReviewCardProps) 
               <div className="flex flex-wrap gap-3 text-sm text-gray-800">
                 {review.course && (
                   <span>
-                    Course: <span className="font-semibold">{review.course}</span>
+                    Course:{" "}
+                    <span className="font-semibold">{review.course}</span>
                   </span>
                 )}
                 {review.attendance && (
                   <span>
-                    Attendance: <span className="font-semibold">{review.attendance}</span>
+                    Attendance:{" "}
+                    <span className="font-semibold">{review.attendance}</span>
                   </span>
                 )}
                 {review.grade && (
@@ -125,7 +130,8 @@ export default function ReviewCard({ review, isSchoolReview }: ReviewCardProps) 
                 )}
                 {review.textbook && (
                   <span>
-                    Textbook: <span className="font-semibold">{review.textbook}</span>
+                    Textbook:{" "}
+                    <span className="font-semibold">{review.textbook}</span>
                   </span>
                 )}
               </div>
