@@ -1,17 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Review } from "@/lib/mockData";
+import type { Review } from "@/lib/types";
 
 interface ReviewCardProps {
   review: Review;
   isSchoolReview?: boolean;
 }
 
-export default function ReviewCard({
-  review,
-  isSchoolReview,
-}: ReviewCardProps) {
+export default function ReviewCard({ review, isSchoolReview }: ReviewCardProps) {
   const [helpful, setHelpful] = useState(review.helpfulCount);
   const [notHelpful, setNotHelpful] = useState(review.notHelpfulCount);
   const [helpfulClicked, setHelpfulClicked] = useState(false);
@@ -53,6 +50,31 @@ export default function ReviewCard({
     return "bg-green-300";
   };
 
+  const formatDate = (value: string) => {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+
+    const month = date.toLocaleString("en-US", { month: "long" });
+    const day = date.getDate();
+    const year = date.getFullYear();
+
+    const suffix = (() => {
+      if (day >= 11 && day <= 13) return "th";
+      switch (day % 10) {
+        case 1:
+          return "st";
+        case 2:
+          return "nd";
+        case 3:
+          return "rd";
+        default:
+          return "th";
+      }
+    })();
+
+    return `${month} ${day}${suffix}, ${year}`;
+  };
+
   const schoolCategoryEntries = review.schoolRatings
     ? [
         { label: "Reputation", value: review.schoolRatings.reputation },
@@ -70,116 +92,111 @@ export default function ReviewCard({
 
   return (
     <div className="border border-gray-200 rounded-lg p-6 bg-white">
-      <div className="flex gap-4 mb-4">
+      <div className="flex gap-6">
         {/* Rating Box */}
-        <div
-          className={`${getRatingColor(
-            review.rating
-          )} text-black font-bold w-20 h-20 flex items-center justify-center text-3xl rounded`}
-        >
-          {review.rating.toFixed(1)}
+        <div className="flex flex-col items-center gap-3 w-24">
+          <div
+            className={`${getRatingColor(
+              review.rating
+            )} text-black font-bold w-20 h-20 flex items-center justify-center text-3xl rounded`}
+          >
+            {review.rating.toFixed(1)}
+          </div>
         </div>
 
-        <div className="flex-1">
-          {/* Header */}
-          <div className="flex justify-between items-start mb-2">
-            <div>
-              <h3 className="font-bold">
-                {isSchoolReview ? "Overall" : "Overall"}
-              </h3>
-              {review.course && (
-                <p className="text-sm text-gray-600">{review.course}</p>
-              )}
+        <div className="flex-1 space-y-4">
+          {!isSchoolReview ? (
+            <div className="flex justify-between items-start gap-3">
+              <div className="flex flex-wrap gap-3 text-sm text-gray-800">
+                {review.course && (
+                  <span>
+                    Course: <span className="font-semibold">{review.course}</span>
+                  </span>
+                )}
+                {review.attendance && (
+                  <span>
+                    Attendance: <span className="font-semibold">{review.attendance}</span>
+                  </span>
+                )}
+                {review.grade && (
+                  <span>
+                    Grade: <span className="font-semibold">{review.grade}</span>
+                  </span>
+                )}
+                {review.textbook && (
+                  <span>
+                    Textbook: <span className="font-semibold">{review.textbook}</span>
+                  </span>
+                )}
+              </div>
+              <span className="text-sm text-gray-600 whitespace-nowrap">
+                {formatDate(review.date)}
+              </span>
             </div>
-            <span className="text-sm text-gray-600">{review.date}</span>
-          </div>
-
-          {/* Difficulty and Quality */}
-          {(review.quality || review.difficulty) && (
-            <div className="flex gap-6 mb-3 text-sm">
-              {review.quality && (
-                <span className="text-gray-700">
-                  Quality:{" "}
-                  <span className="font-semibold">
-                    {review.quality.toFixed(1)}
-                  </span>
-                </span>
-              )}
-              {review.difficulty && (
-                <span className="text-gray-700">
-                  Difficulty:{" "}
-                  <span className="font-semibold">
-                    {review.difficulty.toFixed(1)}
-                  </span>
-                </span>
-              )}
+          ) : (
+            <div className="flex items-start gap-3">
+              <blockquote className="flex-1 text-gray-800 text-lg font-semibold leading-relaxed bg-gray-50 border-l-4 border-gray-200 px-4 py-3 rounded-r">
+                {review.text}
+              </blockquote>
+              <span className="text-sm text-gray-600 whitespace-nowrap">
+                {formatDate(review.date)}
+              </span>
             </div>
           )}
 
-          {/* Course Info */}
-          {(review.attendance || review.grade || review.textbook) && (
-            <div className="text-xs text-gray-600 mb-3">
-              {review.course && <span>Course: {review.course}</span>}
-              {review.attendance && (
-                <span> • Attendance: {review.attendance}</span>
-              )}
-              {review.grade && <span> • Grade: {review.grade}</span>}
-              {review.textbook && <span> • Textbook: {review.textbook}</span>}
+          {!isSchoolReview && (
+            <blockquote className="text-gray-800 text-lg font-semibold leading-relaxed bg-gray-50 border-l-4 border-gray-200 px-4 py-3 rounded-r">
+              {review.text}
+            </blockquote>
+          )}
+
+          {review.tags && review.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {review.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full bg-gray-200 px-3 py-1 text-xs font-semibold text-gray-800"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {isSchoolReview && schoolCategoryEntries.length > 0 && (
+            <div className="grid sm:grid-cols-2 gap-3 text-sm">
+              {schoolCategoryEntries.map((entry) => {
+                const filled = Math.round(entry.value);
+                return (
+                  <div key={entry.label} className="flex items-center gap-3">
+                    <span className="w-24 text-gray-700 font-medium">
+                      {entry.label}
+                    </span>
+                    <div className="flex gap-1">
+                      {[1, 2, 3, 4, 5].map((level) => (
+                        <div
+                          key={level}
+                          className={`h-4 w-6 rounded ${
+                            level <= filled
+                              ? bucketColor(entry.value)
+                              : "bg-gray-200"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <span className="min-w-[2.5rem] text-right font-semibold text-gray-800">
+                      {entry.value.toFixed(1)}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
       </div>
 
-      {/* Review Text */}
-      <p className="text-gray-700 mb-4 leading-relaxed">{review.text}</p>
-
-      {/* Reviewer Tags */}
-      {review.tags && review.tags.length > 0 && (
-        <div className="mb-4 flex flex-wrap gap-2">
-          {review.tags.map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full bg-gray-200 px-3 py-1 text-xs font-semibold text-gray-800"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-      )}
-
-      {/* School category breakdown */}
-      {isSchoolReview && schoolCategoryEntries.length > 0 && (
-        <div className="mb-4 grid sm:grid-cols-2 gap-3 text-sm">
-          {schoolCategoryEntries.map((entry) => {
-            const filled = Math.round(entry.value);
-            return (
-              <div key={entry.label} className="flex items-center gap-3">
-                <span className="w-24 text-gray-700 font-medium">
-                  {entry.label}
-                </span>
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map((level) => (
-                    <div
-                      key={level}
-                      className={`h-4 w-6 rounded ${
-                        level <= filled
-                          ? bucketColor(entry.value)
-                          : "bg-gray-200"
-                      }`}
-                    />
-                  ))}
-                </div>
-                <span className="min-w-[2.5rem] text-right font-semibold text-gray-800">
-                  {entry.value.toFixed(1)}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      )}
-
       {/* Footer */}
-      <div className="flex items-center justify-between pt-4 border-t">
+      <div className="flex items-center justify-between pt-4 mt-6 border-t">
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-600">Helpful</span>
           <button

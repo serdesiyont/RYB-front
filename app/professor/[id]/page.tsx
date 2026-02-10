@@ -123,7 +123,11 @@ export default async function ProfessorPage({ params }: ProfessorPageProps) {
 
             {/* Action Buttons */}
             <div className="flex gap-3">
-              <Button className="bg-black text-white rounded-full">Rate</Button>
+              <Link href={`/rate/professor/${professor.id}`}>
+                <Button className="bg-black text-white rounded-full">
+                  Rate
+                </Button>
+              </Link>
               <Button
                 variant="outline"
                 className="rounded-full border-black bg-transparent"

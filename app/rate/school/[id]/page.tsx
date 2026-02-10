@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { use, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -143,6 +144,8 @@ export default function SchoolRatingDetail({
   };
 
   const handleSubmit = async () => {
+    const schoolId = selectedSchoolData?.id ?? resolvedParams.id;
+
     const missingCategories = Object.entries(ratings)
       .filter(([, value]) => value < 1)
       .map(([key]) => key);
@@ -156,7 +159,7 @@ export default function SchoolRatingDetail({
       return;
     }
 
-    if (!selectedSchoolData) {
+    if (!schoolId) {
       setError("School not found.");
       return;
     }
@@ -166,7 +169,7 @@ export default function SchoolRatingDetail({
     setSubmitting(true);
 
     try {
-      await submitSchoolRating(selectedSchoolData.id, {
+      await submitSchoolRating(String(schoolId), {
         ratings,
         review,
         tags: topTags,
@@ -229,6 +232,7 @@ export default function SchoolRatingDetail({
                       ? ratingColor(ratings.reputation)
                       : "#e5e7eb",
                 }}
+                className="w-12 h-12 rounded-lg transition"
               />
             ))}
           </div>

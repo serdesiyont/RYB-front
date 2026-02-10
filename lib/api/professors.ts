@@ -155,5 +155,12 @@ function mapLecturerRatingToReview(rating: LecturerRatingResponse): Review {
     helpfulCount: 0,
     notHelpfulCount: 0,
     tags: rating.tags ?? [],
+    grade: rating.grade,
+    textbook:
+      typeof rating.textbook === "boolean"
+        ? rating.textbook
+          ? "Yes"
+          : "No"
+        : rating.textbook,
   };
 }

@@ -85,7 +85,9 @@ export default async function SchoolPage({ params }: SchoolPageProps) {
 
         {/* Action Buttons */}
         <div className="flex gap-4 mb-12">
-          <Button className="bg-black text-white rounded-full">Rate</Button>
+          <Link href={`/rate/school/${school.id}`}>
+            <Button className="bg-black text-white rounded-full">Rate</Button>
+          </Link>
           <Button
             variant="outline"
             className="rounded-full border-black bg-transparent"
