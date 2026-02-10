@@ -2,9 +2,10 @@
 
 import { use, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
+import { useToast } from "@/hooks/use-toast";
 import {
   fetchProfessorById,
   fetchProfessorReviews,
@@ -50,6 +51,8 @@ export default function ProfessorRatingDetail({
   params: Promise<{ id: string }>;
 }) {
   const resolvedParams = use(params);
+  const router = useRouter();
+  const { toast } = useToast();
   const [selectedProf, setSelectedProf] = useState<Professor | null>(null);
   const [fetchedReviews, setFetchedReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
@@ -224,6 +227,13 @@ export default function ProfessorRatingDetail({
         }
         return prev;
       });
+
+      toast({
+        title: "Rating submitted",
+        description: "Redirecting to professor page...",
+      });
+
+      router.push(`/professor/${selectedProf.id}`);
 
       setSubmitMessage(
         courseAdded || !shouldAddCourse

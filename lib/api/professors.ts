@@ -128,18 +128,18 @@ export async function addCourseToProfessor(
   courseName: string,
   options: FetchOptions = {}
 ) {
-  return apiFetch<{ message: string; data: { _id: string; courses: string[] } }>(
-    `/lecturer/${id}/courses`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ name: courseName }),
-      signal: options.signal,
-      credentials: "include",
-    }
-  );
+  return apiFetch<{
+    message: string;
+    data: { _id: string; courses: string[] };
+  }>(`/lecturer/${id}/courses`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ name: courseName }),
+    signal: options.signal,
+    credentials: "include",
+  });
 }
 
 function mapLecturerToProfessor(lecturer: LecturerResponse): Professor {

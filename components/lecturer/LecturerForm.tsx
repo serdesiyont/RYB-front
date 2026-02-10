@@ -8,6 +8,7 @@ import { z } from "zod";
 import { Loader2, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 import {
   Form,
   FormControl,
@@ -32,6 +33,7 @@ export type LecturerFormValues = z.infer<typeof lecturerSchema>;
 
 export function LecturerForm() {
   const router = useRouter();
+  const { toast } = useToast();
   const form = useForm<LecturerFormValues>({
     resolver: zodResolver(lecturerSchema),
     defaultValues: {
@@ -72,11 +74,27 @@ export function LecturerForm() {
     setStatus(null);
     try {
       const res = await createLecturer(values);
-      setStatus(res.message || "Lecturer added successfully");
+      const lecturerId = res?.data?._id;
+
+      toast({
+        title: "Lecturer created",
+        description: "Redirecting to the lecturer page...",
+      });
+
       form.reset({ name: "", university: "", department: "", courses: [] });
-      router.refresh();
+
+      if (lecturerId) {
+        router.push(`/professor/${lecturerId}`);
+      }
     } catch (err: any) {
-      setStatus(err?.message || "Failed to add lecturer. Please try again.");
+      const message =
+        err?.message || "Failed to add lecturer. Please try again.";
+      setStatus(message);
+      toast({
+        variant: "destructive",
+        title: "Unable to add lecturer",
+        description: message,
+      });
     } finally {
       setSubmitting(false);
     }

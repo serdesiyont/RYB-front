@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { use, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
+import { useToast } from "@/hooks/use-toast";
 import {
   fetchSchoolById,
   fetchSchoolReviews,
@@ -26,6 +27,8 @@ export default function SchoolRatingDetail({
   params: Promise<{ id: string }>;
 }) {
   const resolvedParams = use(params);
+  const router = useRouter();
+  const { toast } = useToast();
   const [selectedSchoolData, setSelectedSchoolData] = useState<School | null>(
     null
   );
@@ -174,6 +177,11 @@ export default function SchoolRatingDetail({
         review,
         tags: topTags,
       });
+      toast({
+        title: "Rating submitted",
+        description: "Redirecting to school page...",
+      });
+      router.push(`/school/${schoolId}`);
       setSubmitMessage("Thanks for your rating! It has been submitted.");
     } catch (err) {
       setError(
