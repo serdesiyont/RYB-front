@@ -1,11 +1,15 @@
 "use client";
 
 import { use, useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
-import { reviews, schools } from "@/lib/mockData";
+import {
+  fetchSchoolById,
+  fetchSchoolReviews,
+  submitSchoolRating,
+} from "@/lib/api/schools";
+import type { Review, School } from "@/lib/types";
 
 const ratingColor = (value: number) => {
   if (value <= 1) return "#dc2626";
@@ -21,16 +25,21 @@ export default function SchoolRatingDetail({
   params: Promise<{ id: string }>;
 }) {
   const resolvedParams = use(params);
-  const selectedSchoolData = schools.find(
-    (s) => s.id === parseInt(resolvedParams.id, 10)
+  const [selectedSchoolData, setSelectedSchoolData] = useState<School | null>(
+    null
   );
+  const [fetchedReviews, setFetchedReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const searchParams = useSearchParams();
+  const [submitting, setSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState<string | null>(null);
 
   const topTags = useMemo(() => {
     if (!selectedSchoolData) return [] as string[];
 
     const tagCounts: Record<string, number> = {};
-    reviews
+    fetchedReviews
       .filter((review) => review.schoolId === selectedSchoolData.id)
       .forEach((review) => {
         review.tags?.forEach((tag) => {
@@ -42,7 +51,7 @@ export default function SchoolRatingDetail({
       .sort((a, b) => b[1] - a[1])
       .slice(0, 6)
       .map(([tag]) => tag);
-  }, [selectedSchoolData]);
+  }, [selectedSchoolData, fetchedReviews]);
 
   const [ratings, setRatings] = useState({
     reputation: 0,
@@ -86,6 +95,44 @@ export default function SchoolRatingDetail({
     if (reviewParam) setReview(reviewParam);
   }, [searchParams]);
 
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      try {
+        const school = await fetchSchoolById(
+          parseInt(resolvedParams.id, 10),
+          { allowFallbackToRate: false }
+        );
+        if (!active) return;
+        setSelectedSchoolData(school);
+
+        const schoolReviews = await fetchSchoolReviews(school.id, {
+          allowFallbackToRate: false,
+        });
+        if (!active) return;
+        setFetchedReviews(schoolReviews);
+      } catch (err) {
+        if (!active) return;
+        setLoadError(
+          err instanceof Error
+            ? err.message
+            : "Unable to load school details right now."
+        );
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      active = false;
+    };
+  }, [resolvedParams.id]);
+
+  if (loading) {
+    return <div className="p-4">Loading school...</div>;
+  }
+
   if (!selectedSchoolData) {
     return <div className="p-4">School not found</div>;
   }
@@ -100,7 +147,7 @@ export default function SchoolRatingDetail({
     }));
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const missingCategories = Object.entries(ratings)
       .filter(([, value]) => value < 1)
       .map(([key]) => key);
@@ -114,8 +161,31 @@ export default function SchoolRatingDetail({
       return;
     }
 
+    if (!selectedSchoolData) {
+      setError("School not found.");
+      return;
+    }
+
     setError(null);
-    alert("Submitted!");
+    setSubmitMessage(null);
+    setSubmitting(true);
+
+    try {
+      await submitSchoolRating(selectedSchoolData.id, {
+        ratings,
+        review,
+        tags: topTags,
+      });
+      setSubmitMessage("Thanks for your rating! It has been submitted.");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to submit rating. Please try again."
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -129,6 +199,10 @@ export default function SchoolRatingDetail({
           </p>
           <h1 className="text-4xl font-bold mb-1">{selectedSchoolData.name}</h1>
           <p className="text-lg text-gray-600">Add Rating</p>
+
+          {loadError ? (
+            <p className="mt-2 text-sm text-destructive">{loadError}</p>
+          ) : null}
 
           {topTags.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-2 text-sm">
@@ -475,14 +549,21 @@ export default function SchoolRatingDetail({
           <Button
             onClick={handleSubmit}
             className="rounded-full bg-gray-500 px-12 py-3 text-white hover:bg-gray-600"
+            disabled={submitting}
           >
-            Submit Rating
+            {submitting ? "Submitting..." : "Submit Rating"}
           </Button>
         </div>
 
         {error && (
           <div className="mb-4 rounded border border-red-300 bg-red-50 p-3 text-sm text-red-700">
             {error}
+          </div>
+        )}
+
+        {submitMessage && (
+          <div className="mb-4 rounded border border-green-300 bg-green-50 p-3 text-sm text-green-800">
+            {submitMessage}
           </div>
         )}
       </main>

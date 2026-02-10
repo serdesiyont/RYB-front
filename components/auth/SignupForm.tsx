@@ -8,7 +8,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { Loader2, Mail, UserRound } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
-import {} from './LoginForm';
+import {} from "./LoginForm";
 
 import {
   AuthDivider,
@@ -291,7 +291,9 @@ export function SignupForm() {
             <DialogTitle>Verify your email</DialogTitle>
             <DialogDescription>
               {verificationCopy ||
-                `We just sent a verification link to ${verificationEmail ?? "your email"}.`}
+                `We just sent a verification link to ${
+                  verificationEmail ?? "your email"
+                }.`}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-2 text-sm text-muted-foreground">
@@ -305,14 +307,14 @@ export function SignupForm() {
             </p>
           </div>
           <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-end">
-            <Button
+            {/* <Button
               variant="ghost"
               className="w-full sm:w-auto"
               onClick={() => setVerificationOpen(false)}
             >
-              Close
-            </Button>
-            <Button
+              
+            </Button> */}
+            {/* <Button
               className="w-full sm:w-auto"
               onClick={() => {
                 setVerificationOpen(false);
@@ -320,7 +322,7 @@ export function SignupForm() {
               }}
             >
               Go to login
-            </Button>
+            </Button> */}
           </DialogFooter>
         </DialogContent>
       </Dialog>

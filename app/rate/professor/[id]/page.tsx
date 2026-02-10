@@ -5,7 +5,12 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
-import { professors, reviews, schools } from "@/lib/mockData";
+import {
+  fetchProfessorById,
+  fetchProfessorReviews,
+  submitProfessorRating,
+} from "@/lib/api/professors";
+import type { Professor, Review } from "@/lib/types";
 
 const TAGS = [
   "Tough Grader",
@@ -46,16 +51,19 @@ export default function ProfessorRatingDetail({
   params: Promise<{ id: string }>;
 }) {
   const resolvedParams = use(params);
-  const selectedProf = professors.find(
-    (p) => p.id === parseInt(resolvedParams.id, 10)
-  );
+  const [selectedProf, setSelectedProf] = useState<Professor | null>(null);
+  const [fetchedReviews, setFetchedReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const searchParams = useSearchParams();
+  const [submitting, setSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState<string | null>(null);
 
   const professorTags = useMemo(() => {
     if (!selectedProf) return [] as string[];
 
     const tagCounts: Record<string, number> = {};
-    reviews
+    fetchedReviews
       .filter((review) => review.professorId === selectedProf.id)
       .forEach((review) => {
         review.tags?.forEach((tag) => {
@@ -67,7 +75,7 @@ export default function ProfessorRatingDetail({
       .sort((a, b) => b[1] - a[1])
       .slice(0, 6)
       .map(([tag]) => tag);
-  }, [selectedProf]);
+  }, [selectedProf, fetchedReviews]);
 
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [rating, setRating] = useState(0);
@@ -83,6 +91,40 @@ export default function ProfessorRatingDetail({
   const [grade, setGrade] = useState("");
   const [review, setReview] = useState("");
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      try {
+        const professor = await fetchProfessorById(
+          parseInt(resolvedParams.id, 10),
+          { allowFallbackToRate: false }
+        );
+        if (!active) return;
+        setSelectedProf(professor);
+
+        const profReviews = await fetchProfessorReviews(professor.id, {
+          allowFallbackToRate: false,
+        });
+        if (!active) return;
+        setFetchedReviews(profReviews);
+      } catch (err) {
+        if (!active) return;
+        setLoadError(
+          err instanceof Error
+            ? err.message
+            : "Unable to load professor details right now."
+        );
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    load();
+    return () => {
+      active = false;
+    };
+  }, [resolvedParams.id]);
 
   useEffect(() => {
     const editing = searchParams.get("edit");
@@ -125,7 +167,7 @@ export default function ProfessorRatingDetail({
     ).slice(0, 5);
   }, [courseCode]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const missing: string[] = [];
     if (rating < 1) missing.push("rating");
     if (difficulty < 1) missing.push("difficulty");
@@ -144,14 +186,51 @@ export default function ProfessorRatingDetail({
       return;
     }
 
+    if (!selectedProf) {
+      setError("Professor not found.");
+      return;
+    }
+
     setError(null);
-    // Stub submit: replace with real mutation when backend is ready
-    alert("Submitted!");
+    setSubmitMessage(null);
+    setSubmitting(true);
+
+    try {
+      await submitProfessorRating(selectedProf.id, {
+        rating,
+        difficulty,
+        wouldTakeAgain: retake === "yes",
+        course: courseCode,
+        isOnlineCourse,
+        textbook,
+        attendance,
+        forCredit: credit,
+        grade,
+        review,
+        tags: selectedTags,
+      });
+
+      setSubmitMessage("Thanks for your rating! It has been submitted.");
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Failed to submit rating. Please try again."
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  if (loading) {
+    return <div className="p-4">Loading professor...</div>;
+  }
 
   if (!selectedProf) {
     return <div className="p-4">Professor not found</div>;
   }
+
+  const selectedSchoolName = selectedProf.schoolName || "University";
 
   const toggleTag = (tag: string) => {
     if (selectedTags.includes(tag)) {
@@ -176,10 +255,13 @@ export default function ProfessorRatingDetail({
               href={`/school/${selectedProf.schoolId}`}
               className="ml-1 text-blue-600 hover:underline"
             >
-              {schools.find((s) => s.id === selectedProf.schoolId)?.name ||
-                "University"}
+              {selectedSchoolName}
             </Link>
           </p>
+
+          {loadError ? (
+            <p className="mt-2 text-sm text-destructive">{loadError}</p>
+          ) : null}
 
           {professorTags.length > 0 && (
             <div className="mt-4 flex flex-wrap gap-2 text-sm">
@@ -517,14 +599,21 @@ export default function ProfessorRatingDetail({
           <Button
             onClick={handleSubmit}
             className="rounded-full bg-gray-500 px-12 py-3 text-white hover:bg-gray-600"
+            disabled={submitting}
           >
-            Submit Rating
+            {submitting ? "Submitting..." : "Submit Rating"}
           </Button>
         </div>
 
         {error && (
           <div className="mb-4 rounded border border-red-300 bg-red-50 p-3 text-sm text-red-700">
             {error}
+          </div>
+        )}
+
+        {submitMessage && (
+          <div className="mb-4 rounded border border-green-300 bg-green-50 p-3 text-sm text-green-800">
+            {submitMessage}
           </div>
         )}
       </main>

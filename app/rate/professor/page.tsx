@@ -1,8 +1,6 @@
-"use client";
-
 import Link from "next/link";
 import Header from "@/components/Header";
-import { professors } from "@/lib/mockData";
+import { fetchProfessors } from "@/lib/api/professors";
 
 const ratingColor = (value: number) => {
   if (value < 1) return "bg-red-600 text-white";
@@ -12,7 +10,19 @@ const ratingColor = (value: number) => {
   return "bg-green-600 text-white";
 };
 
-export default function ProfessorRatingPage() {
+export default async function ProfessorRatingPage() {
+  let loadError: string | null = null;
+  let professors = [] as Awaited<ReturnType<typeof fetchProfessors>>;
+
+  try {
+    professors = await fetchProfessors();
+  } catch (error) {
+    loadError =
+      error instanceof Error
+        ? error.message
+        : "Unable to load professors right now.";
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -23,33 +33,37 @@ export default function ProfessorRatingPage() {
           <h1 className="text-4xl font-bold">Rate a Professor</h1>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {professors.map((prof) => (
-            <Link
-              key={prof.id}
-              href={`/rate/professor/${prof.id}`}
-              className="block rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <h2 className="text-lg font-semibold">{prof.name}</h2>
-                  <p className="text-sm text-gray-600">{prof.department}</p>
-                  <p className="text-sm text-gray-500">{prof.schoolName}</p>
+        {loadError ? (
+          <p className="text-sm text-destructive">{loadError}</p>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {professors.map((prof) => (
+              <Link
+                key={prof.id}
+                href={`/rate/professor/${prof.id}`}
+                className="block rounded-lg border border-gray-200 bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h2 className="text-lg font-semibold">{prof.name}</h2>
+                    <p className="text-sm text-gray-600">{prof.department}</p>
+                    <p className="text-sm text-gray-500">{prof.schoolName}</p>
+                  </div>
+                  <span
+                    className={`rounded-full px-3 py-1 text-sm font-semibold ${ratingColor(
+                      prof.averageRating
+                    )}`}
+                  >
+                    {prof.averageRating.toFixed(1)}
+                  </span>
                 </div>
-                <span
-                  className={`rounded-full px-3 py-1 text-sm font-semibold ${ratingColor(
-                    prof.averageRating
-                  )}`}
-                >
-                  {prof.averageRating.toFixed(1)}
-                </span>
-              </div>
-              <p className="mt-3 text-sm text-gray-600">
-                {prof.totalRatings} ratings
-              </p>
-            </Link>
-          ))}
-        </div>
+                <p className="mt-3 text-sm text-gray-600">
+                  {prof.totalRatings} ratings
+                </p>
+              </Link>
+            ))}
+          </div>
+        )}
       </main>
     </div>
   );

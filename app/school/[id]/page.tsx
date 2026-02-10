@@ -1,9 +1,14 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { schools, professors, reviews } from "@/lib/mockData";
 import Header from "@/components/Header";
 import SchoolRatingsGrid from "@/components/SchoolRatingsGrid";
 import ReviewCard from "@/components/ReviewCard";
+import {
+  fetchSchoolById,
+  fetchSchoolReviews,
+  isNotFound as isSchoolNotFound,
+} from "@/lib/api/schools";
+import { fetchProfessors } from "@/lib/api/professors";
 
 interface SchoolPageProps {
   params: Promise<{ id: string }>;
@@ -13,13 +18,17 @@ export default async function SchoolPage({ params }: SchoolPageProps) {
   const { id } = await params;
   const numericId = Number(id);
 
-  const school = schools.find((s) => s.id === numericId);
-  const schoolProfessors = professors.filter((p) => p.schoolId === numericId);
-  const schoolReviews = reviews.filter((r) => r.schoolId === numericId);
-
+  const school = await resolveSchool(numericId);
   if (!school) {
     return <div className="p-4">School not found</div>;
   }
+
+  const [schoolProfessors, schoolReviews] = await Promise.all([
+    fetchProfessors({ useMockOnError: true }).then((list) =>
+      list.filter((p) => p.schoolId === school.id)
+    ),
+    fetchSchoolReviews(school.id, { useMockOnError: true }),
+  ]);
 
   const tagCounts: Record<string, number> = {};
   schoolReviews.forEach((review) => {
@@ -101,4 +110,13 @@ export default async function SchoolPage({ params }: SchoolPageProps) {
       </main>
     </div>
   );
+}
+
+async function resolveSchool(id: number) {
+  try {
+    return await fetchSchoolById(id, { useMockOnError: true });
+  } catch (error) {
+    if (isSchoolNotFound(error)) return null;
+    throw error;
+  }
 }

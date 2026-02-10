@@ -155,7 +155,7 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
                     variant="outline"
                     className="bg-transparent text-white border-white hover:bg-white hover:text-black text-xs px-4 py-1.5"
                   >
-                    <Link href="/rate/professor">Add a Lecturer</Link>
+                    <Link href="/lecturer/add">Add a Lecturer</Link>
                   </Button>
                   <button
                     onClick={() => setShowMobileMenu(!showMobileMenu)}
@@ -228,6 +228,13 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
                     </>
                   ) : (
                     <>
+                      <Link
+                        href="/lecturer/add"
+                        className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm font-medium"
+                        onClick={() => setShowMobileMenu(false)}
+                      >
+                        Add a Lecturer
+                      </Link>
                       <Link
                         href="/profile"
                         className="block px-4 py-2 hover:bg-gray-100 text-sm font-medium"
@@ -346,7 +353,7 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
                   variant="outline"
                   className="bg-transparent rounded-full px-8 text-white border-white hover:bg-white hover:text-black hover:scale-105 transition-all duration-300 text-sm"
                 >
-                  <Link href="/rate/professor">Add a Lecturer</Link>
+                  <Link href="/lecturer/add">Add a Lecturer</Link>
                 </Button>
 
                 <div className="relative" ref={dropdownRef}>
@@ -418,7 +425,7 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
                   variant="outline"
                   className="bg-white text-black border-white hover:bg-black hover:text-white text-sm font-medium rounded-full px-6"
                 >
-                  <Link href="/rate/professor">Add a Lecturer</Link>
+                  <Link href="/lecturer/add">Add a Lecturer</Link>
                 </Button>
 
                 <div className="relative" ref={dropdownRef}>

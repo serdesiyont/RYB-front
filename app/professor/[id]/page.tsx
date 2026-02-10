@@ -1,9 +1,13 @@
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { professors, reviews } from '@/lib/mockData';
-import Header from '@/components/Header';
-import RatingChart from '@/components/RatingChart';
-import ReviewCard from '@/components/ReviewCard';
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import Header from "@/components/Header";
+import RatingChart from "@/components/RatingChart";
+import ReviewCard from "@/components/ReviewCard";
+import {
+  fetchProfessorById,
+  fetchProfessorReviews,
+  isNotFound as isProfessorNotFound,
+} from "@/lib/api/professors";
 
 const PREVIEW_PROFESSOR_ID = 123456;
 
@@ -11,19 +15,31 @@ interface ProfessorPageProps {
   params: Promise<{ id: string }>;
 }
 
+async function resolveProfessor(id: number) {
+  try {
+    return await fetchProfessorById(id, { useMockOnError: true });
+  } catch (error) {
+    if (isProfessorNotFound(error) && id !== PREVIEW_PROFESSOR_ID) {
+      return fetchProfessorById(PREVIEW_PROFESSOR_ID, { useMockOnError: true });
+    }
+    throw error;
+  }
+}
+
 export default async function ProfessorPage({ params }: ProfessorPageProps) {
   const { id } = await params;
-  const numericId = Number(id);
+  const numericId = Number.isNaN(Number(id)) ? PREVIEW_PROFESSOR_ID : Number(id);
 
-  const matchedProfessor = professors.find(p => p.id === numericId);
-  const professor = matchedProfessor ?? professors.find(p => p.id === PREVIEW_PROFESSOR_ID);
-
+  const professor = await resolveProfessor(numericId);
   if (!professor) {
     return <div className="p-4">Professor not found</div>;
   }
 
-  const professorReviews = reviews.filter(r => r.professorId === professor.id);
-  const isPreviewProfile = !matchedProfessor;
+  const professorReviews = await fetchProfessorReviews(professor.id, {
+    useMockOnError: true,
+  });
+  const isPreviewProfile = professor.id === PREVIEW_PROFESSOR_ID &&
+    numericId !== PREVIEW_PROFESSOR_ID;
 
   const ratingDistribution = {
     5: professorReviews.filter(r => r.rating === 5).length,
