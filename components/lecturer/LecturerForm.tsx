@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -19,6 +19,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { createLecturer } from "@/lib/api/lecturers";
+import { fetchSchools } from "@/lib/api/schools";
 
 const lecturerSchema = z.object({
   name: z.string().trim().min(2, "Name is required"),
@@ -30,6 +31,9 @@ const lecturerSchema = z.object({
 });
 
 export type LecturerFormValues = z.infer<typeof lecturerSchema>;
+
+const UNIVERSITIES_CACHE_KEY = "universities-cache-v1";
+const UNIVERSITIES_CACHE_TTL = 1000 * 60 * 60 * 12; // 12 hours
 
 export function LecturerForm() {
   const router = useRouter();
@@ -47,8 +51,66 @@ export function LecturerForm() {
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
   const [courseInput, setCourseInput] = useState("");
+  const [universities, setUniversities] = useState<string[]>([]);
+  const [universitiesLoading, setUniversitiesLoading] = useState(false);
+  const [showUniversitySuggestions, setShowUniversitySuggestions] =
+    useState(false);
 
   const courses = form.watch("courses");
+  const universityValue = form.watch("university");
+
+  useEffect(() => {
+    let active = true;
+    const loadUniversities = async () => {
+      if (typeof window === "undefined") return;
+
+      const cachedRaw = localStorage.getItem(UNIVERSITIES_CACHE_KEY);
+      if (cachedRaw) {
+        try {
+          const cached = JSON.parse(cachedRaw) as {
+            data: string[];
+            timestamp: number;
+          };
+          const isFresh =
+            Date.now() - cached.timestamp < UNIVERSITIES_CACHE_TTL;
+          if (cached.data?.length) {
+            setUniversities(cached.data);
+            if (isFresh) return;
+          }
+        } catch {
+          // ignore malformed cache
+        }
+      }
+
+      setUniversitiesLoading(true);
+      try {
+        const schools = await fetchSchools();
+        if (!active) return;
+        const unique = Array.from(
+          new Set(
+            schools
+              .map((s) => s.name)
+              .filter(Boolean)
+              .map((name) => name.trim())
+          )
+        ).sort((a, b) => a.localeCompare(b));
+        setUniversities(unique);
+        localStorage.setItem(
+          UNIVERSITIES_CACHE_KEY,
+          JSON.stringify({ data: unique, timestamp: Date.now() })
+        );
+      } catch (err) {
+        console.error("Failed to load universities", err);
+      } finally {
+        if (active) setUniversitiesLoading(false);
+      }
+    };
+
+    loadUniversities();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const addCourse = () => {
     const value = courseInput.trim();
@@ -121,22 +183,74 @@ export function LecturerForm() {
           <FormField
             control={form.control}
             name="university"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>University</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g., Stanford University" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              const filteredUniversities = universities
+                .filter((name) =>
+                  universityValue
+                    ? name.toLowerCase().includes(universityValue.toLowerCase())
+                    : true
+                )
+                .slice(0, 12);
+
+              return (
+                <FormItem className="flex h-full flex-col justify-end mt-2">
+                  <FormLabel>University</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Input
+                        placeholder="e.g., Stanford University"
+                        autoComplete="off"
+                        {...field}
+                        onFocus={(e) => {
+                          setShowUniversitySuggestions(true);
+                          field.onFocus?.(e);
+                        }}
+                        onBlur={(e) => {
+                          setTimeout(
+                            () => setShowUniversitySuggestions(false),
+                            120
+                          );
+                          field.onBlur?.(e);
+                        }}
+                      />
+                      {showUniversitySuggestions &&
+                      filteredUniversities.length > 0 ? (
+                        <div className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-gray-200 bg-white/80 shadow-lg backdrop-blur">
+                          {filteredUniversities.map((name) => (
+                            <button
+                              type="button"
+                              key={name}
+                              className="block w-full px-3 py-2 text-left text-sm hover:bg-white/60"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => {
+                                form.setValue("university", name, {
+                                  shouldValidate: true,
+                                  shouldDirty: true,
+                                });
+                                setShowUniversitySuggestions(false);
+                              }}
+                            >
+                              {name}
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  </FormControl>
+                  <FormDescription>
+                    {universitiesLoading ? "Loading universities..." : ""}
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
 
           <FormField
             control={form.control}
             name="department"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="flex h-full flex-col justify-end">
                 <FormLabel>Department</FormLabel>
                 <FormControl>
                   <Input placeholder="e.g., Computer Science" {...field} />
