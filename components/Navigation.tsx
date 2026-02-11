@@ -3,10 +3,10 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/components/auth/auth-provider";
 import { authClient } from "@/lib/auth-client";
+import { useSearch } from "@/hooks/use-search";
 
 interface NavigationProps {
   isHomepage?: boolean;
@@ -25,9 +25,15 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
   );
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showMobileSuggestions, setShowMobileSuggestions] = useState(false);
+  const [profQuery, setProfQuery] = useState("");
+  const [schoolQuery, setSchoolQuery] = useState("");
+  const { results, count, loading, search } = useSearch();
   const dropdownRef = useRef<HTMLDivElement>(null);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const mobileSearchRef = useRef<HTMLDivElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -48,12 +54,78 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
         !mobileSearchRef.current.contains(event.target as Node)
       ) {
         setShowMobileSearch(false);
+        setShowMobileSuggestions(false);
+      }
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
       }
     }
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  const handleSearchTypeChange = (value: "professors" | "schools") => {
+    setSearchType(value);
+    if (value === "professors") {
+      search({ mode: "professors", query: profQuery });
+    } else {
+      search({ mode: "schools", query: schoolQuery });
+    }
+  };
+
+  const handleResultClick = (id: string, type: "professors" | "schools") => {
+    setShowSuggestions(false);
+    setShowMobileSuggestions(false);
+    if (type === "professors") {
+      router.push(`/professor/${id}`);
+    } else {
+      router.push(`/school/${id}`);
+    }
+  };
+
+  const renderSuggestions = (
+    isMobile: boolean,
+    anchorClasses = "w-full",
+    queryText = ""
+  ) => {
+    const show = isMobile ? showMobileSuggestions : showSuggestions;
+    return show ? (
+      <div
+        className={`absolute top-full mt-2 max-h-64 overflow-auto rounded-lg border border-white/30 bg-white/60 text-black shadow-lg backdrop-blur-md z-50 ${anchorClasses}`}
+      >
+        {loading ? (
+          <div className="px-3 py-2 text-sm text-gray-700">Searching...</div>
+        ) : results.length === 0 ? (
+          <div className="px-3 py-2 text-sm text-gray-700">
+            {queryText.trim().length < 3
+              ? "Type at least 3 characters"
+              : count === 0
+                ? "No matches yet"
+                : "Searching..."}
+          </div>
+        ) : (
+          results.map((item) => (
+            <button
+              key={`${item.type}-${item.id}`}
+              type="button"
+              className="block w-full px-3 py-2 text-left text-sm hover:bg-white/60"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => handleResultClick(item.id, item.type)}
+            >
+              <div className="font-semibold">{item.name}</div>
+              {item.subtitle ? (
+                <div className="text-xs text-gray-600">{item.subtitle}</div>
+              ) : null}
+            </button>
+          ))
+        )}
+      </div>
+    ) : null;
+  };
 
   return (
     <header
@@ -80,7 +152,7 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
                     <select
                       value={searchType}
                       onChange={(e) =>
-                        setSearchType(
+                        handleSearchTypeChange(
                           e.target.value as "professors" | "schools"
                         )
                       }
@@ -98,18 +170,47 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
                     </span>
                   </div>
 
-                  {searchType === "professors" && (
-                    <input
-                      type="text"
-                      placeholder="Professor name"
-                      className="w-full bg-transparent border border-gray-500 rounded-full px-4 py-2 text-sm placeholder-gray-400 focus:outline-none focus:border-white"
-                    />
+                  {searchType === "professors" ? (
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={profQuery}
+                        onFocus={() => setShowMobileSuggestions(true)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setProfQuery(value);
+                          search({ mode: "professors", query: value });
+                        }}
+                        placeholder="Professor name"
+                        className="w-full bg-transparent border border-gray-500 rounded-full px-4 py-2 text-sm placeholder-gray-400 focus:outline-none focus:border-white"
+                      />
+                      {renderSuggestions(
+                        true,
+                        "left-1/2 -translate-x-1/2 w-[calc(100%+2rem)] max-w-[90vw]",
+                        profQuery
+                      )}
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={schoolQuery}
+                        onFocus={() => setShowMobileSuggestions(true)}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setSchoolQuery(value);
+                          search({ mode: "schools", query: value });
+                        }}
+                        placeholder="School name"
+                        className="w-full bg-transparent border border-gray-500 rounded-full px-4 py-2 text-sm placeholder-gray-400 focus:outline-none focus:border-white"
+                      />
+                      {renderSuggestions(
+                        true,
+                        "left-1/2 -translate-x-1/2 w-[calc(100%+2rem)] max-w-[90vw]",
+                        schoolQuery
+                      )}
+                    </div>
                   )}
-                  <input
-                    type="text"
-                    placeholder="Your school"
-                    className="w-full bg-transparent border border-gray-500 rounded-full px-4 py-2 text-sm placeholder-gray-400 focus:outline-none focus:border-white"
-                  />
                 </div>
               </div>
             )}
@@ -284,13 +385,15 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
 
         {/* Navigation items - only on non-homepage */}
         {!isHomepage && (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 mr-40">
             {/* Professors/Schools dropdown */}
             <div className="relative">
               <select
                 value={searchType}
                 onChange={(e) =>
-                  setSearchType(e.target.value as "professors" | "schools")
+                  handleSearchTypeChange(
+                    e.target.value as "professors" | "schools"
+                  )
                 }
                 className="flex items-center gap-1 text-sm font-medium hover:text-gray-300 bg-transparent border-none cursor-pointer appearance-none pr-5"
               >
@@ -306,22 +409,40 @@ export default function Navigation({ isHomepage = false }: NavigationProps) {
               </span>
             </div>
 
-            {/* Search inputs - fixed width container */}
-            <div className="flex items-center gap-3 relative w-[544px]">
-              <input
-                type="text"
-                placeholder="Professor name"
-                className={`w-64 bg-transparent border border-gray-500 rounded-full px-4 py-2 text-sm placeholder-gray-400 focus:outline-none focus:border-white ${
-                  searchType === "schools" ? "invisible" : "visible"
-                }`}
-              />
-              <input
-                type="text"
-                placeholder="Your school"
-                className={`w-64 bg-transparent border border-gray-500 rounded-full px-4 py-2 text-sm placeholder-gray-400 focus:outline-none focus:border-white ${
-                  searchType === "schools" ? "absolute left-0" : ""
-                }`}
-              />
+            {/* Search input */}
+            <div className="relative w-130" ref={suggestionsRef}>
+              {searchType === "professors" ? (
+                <input
+                  type="text"
+                  value={profQuery}
+                  onFocus={() => setShowSuggestions(true)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setProfQuery(value);
+                    search({ mode: "professors", query: value });
+                  }}
+                  placeholder="Professor name"
+                  className="w-130 bg-transparent border border-gray-500 rounded-full px-4 py-2 text-sm placeholder-gray-400 focus:outline-none focus:border-white"
+                />
+              ) : (
+                <input
+                  type="text"
+                  value={schoolQuery}
+                  onFocus={() => setShowSuggestions(true)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setSchoolQuery(value);
+                    search({ mode: "schools", query: value });
+                  }}
+                  placeholder="School name"
+                  className="w-130 bg-transparent border border-gray-500 rounded-full px-4 py-2 text-sm placeholder-gray-400 focus:outline-none focus:border-white"
+                />
+              )}
+              {renderSuggestions(
+                false,
+                "left-1/2 -translate-x-1/2 w-130 max-w-[90vw]",
+                searchType === "professors" ? profQuery : schoolQuery
+              )}
             </div>
           </div>
         )}

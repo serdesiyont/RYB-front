@@ -115,19 +115,14 @@
           ],
           "response": {
             "200": {
-              "description": "Search results with relevance scoring",
+              "description": "Search results optimized for live search - returns only essential fields (id, name, and type)",
               "campusSearchExample": {
                 "type": "campus",
                 "query": "Addis Ababa",
                 "results": [
                   {
                     "_id": "string",
-                    "name": "string",
-                    "address": "string",
-                    "description": "string",
-                    "overallRating": "number",
-                    "count": "number",
-                    "score": "number (search relevance score)"
+                    "name": "string"
                   }
                 ],
                 "count": "number"
@@ -138,15 +133,7 @@
                 "results": [
                   {
                     "_id": "string",
-                    "name": "string",
-                    "university": "string",
-                    "department": "string",
-                    "courses": ["string"],
-                    "rating": "number",
-                    "count": "number",
-                    "difficulty": "number",
-                    "wouldTakeAgain": "number",
-                    "score": "number (search relevance score)"
+                    "name": "string"
                   }
                 ],
                 "count": "number"
@@ -160,15 +147,7 @@
                 "results": [
                   {
                     "_id": "string",
-                    "name": "string",
-                    "university": "string",
-                    "department": "string",
-                    "courses": ["string"],
-                    "rating": "number",
-                    "count": "number",
-                    "difficulty": "number",
-                    "wouldTakeAgain": "number",
-                    "score": "number (search relevance score)"
+                    "name": "string"
                   }
                 ],
                 "count": "number"
@@ -183,8 +162,8 @@
             "Fuzzy matching with up to 2 character edits for typo tolerance",
             "Falls back to regex search if Atlas Search is not configured",
             "Returns top 20 most relevant results",
-            "Includes search relevance score",
-            "Searches across multiple fields: name, department, courses, description"
+            "Optimized for live search - returns only _id and name fields to minimize payload size",
+            "Searches across multiple fields: name, department, courses, description, address"
           ]
         }
       ]

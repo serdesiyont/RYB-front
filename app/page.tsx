@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Navigation from "@/components/Navigation";
-import { schools, professors } from "@/lib/mockData";
 import { useAuth } from "@/components/auth/auth-provider";
+import { useSearch } from "@/hooks/use-search";
 
 export default function Home() {
+  const router = useRouter();
   const { session, isLoading } = useAuth();
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -16,17 +18,44 @@ export default function Home() {
   const [searchMode, setSearchMode] = useState<"professor" | "school">(
     "professor"
   );
-  const [showSchoolSearch, setShowSchoolSearch] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const { results, count, loading, search } = useSearch();
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const isLoggedIn = !!session;
 
-  const filteredProfessors = professors.filter((prof) =>
-    prof.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const activeMode = searchMode === "professor" ? "professors" : "schools";
 
-  const filteredSchools = schools.filter((school) =>
-    school.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const triggerSearch = (value: string) => {
+    if (activeMode === "professors") {
+      search({ mode: "professors", query: value });
+    } else {
+      search({ mode: "schools", query: value });
+    }
+  };
+
+  const handleResultClick = (id: string, type: "professors" | "schools") => {
+    setShowSuggestions(false);
+    if (type === "professors") {
+      router.push(`/professor/${id}`);
+    } else {
+      router.push(`/school/${id}`);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -51,31 +80,55 @@ export default function Home() {
               <p className="text-2xl mb-8">
                 Find a <span className="font-bold">professor</span>
               </p>
-              <div className="w-full max-w-md px-4 mb-4 relative">
-                <div className="flex items-center bg-transparent rounded-full px-4 py-3 gap-2 backdrop-blur-sm shadow-lg border border-white border-opacity-50">
-                  <Input
-                    placeholder="Professor name"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="border-0 rounded-full bg-transparent text-white placeholder:text-gray-200 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
-                  />
+              <div className="w-full max-w-xl px-4 mb-4 relative" ref={suggestionsRef}>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center bg-transparent rounded-full px-4 py-2 gap-2 backdrop-blur-sm shadow-lg border border-white border-opacity-50">
+                    <Input
+                      placeholder="Professor name"
+                      value={searchQuery}
+                      onFocus={() => setShowSuggestions(true)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setSearchQuery(value);
+                        triggerSearch(value);
+                      }}
+                      className={`w-full border-0 rounded-full bg-transparent text-white placeholder:text-gray-200 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 ${
+                        searchQuery.trim().length > 0 &&
+                        searchQuery.trim().length < 3
+                          ? "text-red-300"
+                          : ""
+                      }`}
+                    />
+                  </div>
                 </div>
-                {searchQuery && filteredProfessors.length > 0 && (
-                  <div className="absolute bg-white text-black rounded-lg mt-2 max-w-md w-full shadow-lg z-10 left-4 right-4">
-                    <div className="max-h-64 overflow-y-auto">
-                      {filteredProfessors.slice(0, 5).map((prof) => (
-                        <Link
-                          key={prof.id}
-                          href={`/professor/${prof.id}`}
-                          className="block px-4 py-2 hover:bg-gray-100 border-b last:border-b-0"
-                        >
-                          <p className="font-semibold">{prof.name}</p>
-                          <p className="text-xs text-gray-600">
-                            {prof.department}
-                          </p>
-                        </Link>
-                      ))}
-                    </div>
+                {showSuggestions && (
+                  <div className="absolute text-black rounded-lg mt-2 z-10 left-1/2 -translate-x-1/2 w-[calc(100%+2rem)] bg-white/70 border border-white/30 shadow-lg backdrop-blur-md">
+                    {loading ? (
+                      <div className="px-4 py-2 text-sm text-gray-700">Searching...</div>
+                    ) : results.length === 0 ? (
+                      searchQuery.trim().length < 3 ? null : (
+                        <div className="px-4 py-2 text-sm text-gray-700">
+                          {count === 0 ? "Couldn't find a match" : "Searching..."}
+                        </div>
+                      )
+                    ) : (
+                      <div className="max-h-64 overflow-y-auto">
+                        {results.slice(0, 6).map((item) => (
+                          <button
+                            key={`${item.type}-${item.id}`}
+                            type="button"
+                            className="block w-full text-left px-4 py-2 hover:bg-white/60"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => handleResultClick(item.id, item.type)}
+                          >
+                            <p className="font-semibold">{item.name}</p>
+                            {item.subtitle ? (
+                              <p className="text-xs text-gray-600">{item.subtitle}</p>
+                            ) : null}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -83,6 +136,7 @@ export default function Home() {
                 onClick={() => {
                   setSearchMode("school");
                   setSearchQuery("");
+                  setShowSuggestions(false);
                 }}
                 className="mt-4 text-white underline text-sm hover:text-gray-300"
               >
@@ -95,31 +149,52 @@ export default function Home() {
                 Enter your <span className="font-bold">school</span> to get
                 started
               </p>
-              <div className="w-full max-w-md px-4 mb-4 relative">
-                <div className="flex items-center bg-transparent rounded-full px-4 py-3 gap-2 backdrop-blur-sm shadow-lg border border-white border-opacity-50 ">
+              <div className="w-full max-w-xl px-4 mb-4 relative" ref={suggestionsRef}>
+                <div className="flex items-center bg-transparent rounded-full px-4 py-2 gap-2 backdrop-blur-sm shadow-lg border border-white border-opacity-50 ">
                   <Input
                     placeholder="Your school"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="border-0 rounded-full bg-transparent text-white placeholder:text-gray-200 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                    onFocus={() => setShowSuggestions(true)}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setSearchQuery(value);
+                      triggerSearch(value);
+                    }}
+                    className={`w-full border-0 rounded-full bg-transparent text-white placeholder:text-gray-200 focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 ${
+                      searchQuery.trim().length > 0 && searchQuery.trim().length < 3
+                        ? "text-red-300"
+                        : ""
+                    }`}
                   />
                 </div>
-                {searchQuery && filteredSchools.length > 0 && (
-                  <div className="absolute bg-white text-black rounded-lg mt-2 max-w-md w-full shadow-lg z-10 left-4 right-4">
-                    <div className="max-h-64 overflow-y-auto">
-                      {filteredSchools.slice(0, 5).map((school) => (
-                        <Link
-                          key={school.id}
-                          href={`/school/${school.id}`}
-                          className="block px-4 py-2 hover:bg-gray-100 border-b last:border-b-0"
-                        >
-                          <p className="font-semibold">{school.name}</p>
-                          <p className="text-xs text-gray-600">
-                            {school.location}
-                          </p>
-                        </Link>
-                      ))}
-                    </div>
+                {showSuggestions && (
+                  <div className="absolute text-black rounded-lg mt-2 z-10 left-1/2 -translate-x-1/2 w-[calc(100%+2rem)] bg-white/70 border border-white/30 shadow-lg backdrop-blur-md">
+                    {loading ? (
+                      <div className="px-4 py-2 text-sm text-gray-700">Searching...</div>
+                    ) : results.length === 0 ? (
+                      searchQuery.trim().length < 3 ? null : (
+                        <div className="px-4 py-2 text-sm text-gray-700">
+                          {count === 0 ? "Couldn't find a match" : "Searching..."}
+                        </div>
+                      )
+                    ) : (
+                      <div className="max-h-64 overflow-y-auto">
+                        {results.slice(0, 6).map((item) => (
+                          <button
+                            key={`${item.type}-${item.id}`}
+                            type="button"
+                            className="block w-full text-left px-4 py-2 hover:bg-white/60"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => handleResultClick(item.id, item.type)}
+                          >
+                            <p className="font-semibold">{item.name}</p>
+                            {item.subtitle ? (
+                              <p className="text-xs text-gray-600">{item.subtitle}</p>
+                            ) : null}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -127,6 +202,7 @@ export default function Home() {
                 onClick={() => {
                   setSearchMode("professor");
                   setSearchQuery("");
+                  setShowSuggestions(false);
                 }}
                 className="mt-4 text-white underline text-sm hover:text-gray-300"
               >
